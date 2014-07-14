@@ -4,6 +4,27 @@ tccutil.py
 ## Modify the OS X Accessiblity Database from the command line
 Apple has a utility in `/usr/bin` named `tccutil`, but it only supports one command, which is to `reset` the entire database.  I wanted a command-line utility that would be able to add, remove, list, and take other actions.
 
+## Usage
+
+tccutil.py -h [--help]
+tccutil.py -l [--list]
+tccutil.py -i [--insert] <bundle id or path to command line utilty>
+tccutil.py -r [--remove] <bundle id or path to command line utilty>
+
+### Examples
+List existing entries in the Accessibility database
+`tccutil.py -l`
+
+Add `/usr/bin/osascript` into the Accessibility database (using UNIX-style options)
+`tccutil.py -i /usr/bin/osascript`
+
+Add TextExpander into the Accessibility database (using long options)
+`tccutil.py --insert com.smileonmymac.textexpander`
+`tccutil.py --insert com.smileonmymac.textexpander.helper`
+
+Remove Chrome from the Accessibility database
+`tccutil.py -r com.google.chrome`
+
 ## Current Feature Set
 
 1. List existing entries in Accessibility database
