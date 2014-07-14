@@ -4,6 +4,8 @@ tccutil.py
 ## Modify the OS X Accessiblity Database from the command line
 Apple has a utility in `/usr/bin` named `tccutil`, but it only supports one command, which is to `reset` the entire database.  I wanted a command-line utility that would be able to add, remove, list, and take other actions.
 
+![tccutil.py logo](http://i2.wp.com/jacobsalmela.com/wp-content/uploads/2014/07/tccutilicon.png?resize=300%2C300)
+
 ## Usage
 
 tccutil.py -h [--help]
