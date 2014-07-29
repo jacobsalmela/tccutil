@@ -6,6 +6,13 @@ Apple has a utility in `/usr/bin` named `tccutil`, but it only supports one comm
 
 ![tccutil.py logo](http://i2.wp.com/jacobsalmela.com/wp-content/uploads/2014/07/tccutilicon.png?resize=300%2C300)
 
+## How is tccutil.py Different?
+**tccutil.py** can just be installed to `/usr/sbin` without any additional software. It can then be **run just like any other command line tool**.  I also wanted the syntax to be easy to remember without having to look it up in the usage line.  There are other solutions out there, but there were some things I did not like about them:
+
++ [Privacy Manager Services](https://github.com/univ-of-utah-marriott-library-apple/privacy_services_manager)--has other dependencies tht need to be installed
+
++ [tccmanager.py](https://github.com/timsutton/scripts/blob/master/tccmanager/tccmanager.py)--uses a .plist to add items, which is inconvenient
+
 ## Usage
 
 It is important that you either run this as root or use `sudo`, otherwise, it will not work and you will end up with "permission denied" errors.
