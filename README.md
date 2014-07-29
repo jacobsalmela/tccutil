@@ -8,32 +8,34 @@ Apple has a utility in `/usr/bin` named `tccutil`, but it only supports one comm
 
 ## Usage
 
-`tccutil.py -h [--help]`
+It is important that you either run this as root or use `sudo`, otherwise, it will not work and you will end up with "permission denied" errors.
 
-`tccutil.py -l [--list]`
+`sudo tccutil.py -h [--help]`
 
-`tccutil.py -i [--insert] <bundle id or path to command line utilty>`
+`sudo tccutil.py -l [--list]`
 
-`tccutil.py -r [--remove] <bundle id or path to command line utilty>`
+`sudo tccutil.py -i [--insert] <bundle id or path to command line utilty>`
+
+`sudo tccutil.py -r [--remove] <bundle id or path to command line utilty>`
 
 ### Examples
 List existing entries in the Accessibility database
 
-`tccutil.py -l`
+`sudo tccutil.py -l`
 
 Add `/usr/bin/osascript` into the Accessibility database (using UNIX-style options)
 
-`tccutil.py -i /usr/bin/osascript`
+`sudo tccutil.py -i /usr/bin/osascript`
 
 Add TextExpander into the Accessibility database (using long options)
 
-`tccutil.py --insert com.smileonmymac.textexpander`
+`sudo tccutil.py --insert com.smileonmymac.textexpander`
 
-`tccutil.py --insert com.smileonmymac.textexpander.helper`
+`sudo tccutil.py --insert com.smileonmymac.textexpander.helper`
 
 Remove Chrome from the Accessibility database
 
-`tccutil.py -r com.google.chrome`
+`sudo tccutil.py -r com.google.chrome`
 
 ## Current Feature Set
 
