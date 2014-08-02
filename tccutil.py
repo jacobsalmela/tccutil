@@ -36,6 +36,8 @@ def usage(e=None):
     print "	%s -l [--list]" % (name,)
     print "	%s -i [--insert] <bundle id or path to command line utilty>" % (name,)
     print "	%s -r [--remove] <bundle id or path to command line utilty>" % (name,)
+    print "	%s -e [--enable] <bundle id or path to command line utilty>" % (name,)
+    print "	%s -d [--disable] <bundle id or path to command line utilty>" % (name,)
     print ""
 
 	
