@@ -22,7 +22,7 @@ def usage(e=None):
 	#------------------------
     name = os.path.basename(sys.argv[0])
     print "  _                 _   _  _ "
-    print " | |_ __ ___  _  __| |_( )| |"
+    print " | |_ ___ ___ _   _| |_( )| |"
     print " | __/ __/ __| | | | __| || |"
     print " | || (_| (__| |_| | |_| || |"
     print "  \__\___\___|\__,_|\__|_||_|"
@@ -86,12 +86,30 @@ def insert_client(client):
 	c.execute("INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL)" % (client,client_type))
 	commit_changes()
 	
+	
 def delete_client(client):
 	#------------------------
 	#print "DELETE from access where client IS %s" % (client)	
 	c.execute("DELETE from access where client IS '%s'" % (client))
 	commit_changes()
+	
 
+def enable(client):
+	#------------------------
+	# Setting typically appears in System Preferences right away (without closing the window)
+	# Set to 1 to enable the client
+	c.execute("UPDATE access SET allowed='1' WHERE client='%s'" % (client))
+	commit_changes()
+		
+	
+def disable(client):
+	#------------------------
+	# Setting typically appears in System Preferences right away (without closing the window)
+	# Set to 0 to disable the client
+	c.execute("UPDATE access SET allowed='0' WHERE client='%s'" % (client))
+	commit_changes()
+
+	
 
 #------------------------
 #------------------------
@@ -103,7 +121,7 @@ def main():
 	try:
 		# First arguments are UNIX-style, single-letter arguments
 		# Second list are long options.  Those requiring arguments are followed by an =
-		opts, args = getopt.getopt(sys.argv[1:], "hlvi:r:", ["help", "list", "verbose", "insert=", "remove="])
+		opts, args = getopt.getopt(sys.argv[1:], "hlvi:r:e:d:", ["help", "list", "verbose", "insert=", "remove=", "enable=", "disable="])
 	except getopt.GetoptError as err:
 		# Print help information and exit:
 		usage()
@@ -125,6 +143,10 @@ def main():
 			insert_client(a)
 		elif o in ("-r", "--remove"):
 			delete_client(a)
+		elif o in ("-e", "--enable"):
+			enable(a)
+		elif o in ("-d", "--disable"):
+			disable(a)
 		else:
 			assert False, "unhandled option"
 		
