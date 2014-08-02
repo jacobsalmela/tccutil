@@ -25,6 +25,10 @@ It is important that you either run this as root or use `sudo`, otherwise, it wi
 
 `sudo tccutil.py -r [--remove] <bundle id or path to command line utilty>`
 
+`sudo tccutil.py -e [--enable] <bundle id or path to command line utilty>`
+
+`sudo tccutil.py -d [--disable] <bundle id or path to command line utilty>`
+
 ### Examples
 List existing entries in the Accessibility database
 
@@ -43,6 +47,14 @@ Add TextExpander into the Accessibility database (using long options)
 Remove Chrome from the Accessibility database
 
 `sudo tccutil.py -r com.google.chrome`
+
+Enable Chrome (must already exist in the list)
+
+`sudo tccutil.py --enable com.google.chrome`
+
+Disable /usr/sbin/jamfAgent (must already exist in the list)
+
+`sudo tccutil.py -d /usr/sbin/jamfAgent`
 
 ## Current Feature Set
 
