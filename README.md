@@ -66,5 +66,5 @@ Disable /usr/sbin/jamfAgent (must already exist in the list)
 ## Planned Features
 
 1. Verbosity
-2. Enable or disable an existing entry
+2. --Enable or disable an existing entry-- **COMPLETE**
 3. Modify other parts of the TCC.db
