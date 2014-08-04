@@ -9,7 +9,7 @@ Apple has a utility in `/usr/bin` named `tccutil`, but it only supports one comm
 ## How is tccutil.py Different?
 **tccutil.py** can just be installed to `/usr/sbin` without any additional software. It can then be **run just like any other command line tool**.  I also wanted the syntax to be easy to remember without having to look it up in the usage line.  There are other solutions out there, but there were some things I did not like about them:
 
-+ [Privacy Manager Services](https://github.com/univ-of-utah-marriott-library-apple/privacy_services_manager)--has other dependencies tht need to be installed
++ [Privacy Manager Services](https://github.com/univ-of-utah-marriott-library-apple/privacy_services_manager)--has other dependencies that need to be installed
 
 + [tccmanager.py](https://github.com/timsutton/scripts/blob/master/tccmanager/tccmanager.py)--uses a .plist to add items, which is inconvenient
 
@@ -61,6 +61,7 @@ Disable /usr/sbin/jamfAgent (must already exist in the list)
 1. List existing entries in Accessibility database
 2. Insert new item into Accessibility database (even command-line utilities)
 3. Remove an existing item from the Accessibility database
+4. Enable or disable an entry
 
 
 ## Planned Features
