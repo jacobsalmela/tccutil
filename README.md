@@ -15,6 +15,7 @@ Apple has a utility in `/usr/bin` named `tccutil`, but it only supports one comm
 
 ## Usage
 
+### This utility needs super-user priveleges.  Run this as root or use `sudo`.
 It is important that you either run this as root or use `sudo`, otherwise, it will not work and you will end up with "permission denied" errors.
 
 `sudo tccutil.py -h [--help]`
