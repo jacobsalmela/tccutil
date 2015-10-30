@@ -85,7 +85,10 @@ def insert_client(client):
 	cli_util_or_bundle_id(client)
 	#print "Client type: " + str(client_type)
 	#print "INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL)" % (client,client_type)
-	c.execute("INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL)" % (client,client_type))
+	if v > 10.10: # El Capitan+
+		c.execute("INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL,NULL)" % (client,client_type))
+	else: # Yosemite
+		c.execute("INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL)" % (client,client_type))
 	commit_changes()
 	
 	
