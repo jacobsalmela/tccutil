@@ -36,24 +36,19 @@ if os.getuid() == 0:
 
 def usage(e=None):
 	#------------------------
-    name = os.path.basename(sys.argv[0])
-    print "  _                 _   _  _ "
-    print " | |_ ___ ___ _   _| |_( )| |"
-    print " | __/ __/ __| | | | __| || |"
-    print " | || (_| (__| |_| | |_| || |"
-    print "  \__\___\___|\__,_|\__|_||_|"
-    print "                                     "
-    print "Copyright 2014. Jacob Salmela.  http://jacobsalmela.com"
-    print "                                     "
-    print "USAGE:--------------------"
-    print "                                     "
-    print "	%s -h [--help]" % (name,)
-    print "	%s -v [--verbose]" % (name,)
-    print "	%s -l [--list]" % (name,)
-    print "	%s -i [--insert] <bundle id or path to command line utilty>" % (name,)
-    print "	%s -r [--remove] <bundle id or path to command line utilty>" % (name,)
-    print "	%s -e [--enable] <bundle id or path to command line utilty>" % (name,)
-    print "	%s -d [--disable] <bundle id or path to command line utilty>" % (name,)
+    print "Usage:"
+    print "  %s [--help]" % (name,)
+    print "  sudo %s [--list]" % (name,)
+    print "  sudo %s [--insert | --remove | --enable | --disable] [<bundle_id | cli_path>] [--verbose]" % (name,)
+    print ""
+    print "Options:"
+    print "  -h | --help      Displays this Help Menu."
+    print "  -l | --list      Lists all Entries in the Accessibility Database."
+    print "  -i | --insert    Adds the given Bundle ID or Path to the Accessibility Database."
+    print "  -r | --remove    Removes the given Bundle ID or Path from the Accessibility Database."
+    print "  -e | --enable    Enables Accessibility Access for the given Bundle ID or Path."
+    print "  -d | --disable   Disables Accessibility Access for the given Bundle ID or Path."
+    print "  -v | --verbose   Outputs additional info for some commands."
     print ""
 
 
