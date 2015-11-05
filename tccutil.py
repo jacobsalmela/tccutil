@@ -1,46 +1,67 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
+
 ##############################
 ######### IMPORTS ############
+
 import sqlite3
 import sys
 import getopt
 import os
 from platform import mac_ver
 
+
 ##############################
 ######## VARIABLES ###########
-# Store OS X version in format of 10.x
+
+# Utility Name
+name = os.path.basename(sys.argv[0])
+
+# OS X version in format of 10.x
 v, _, _ = mac_ver()
 v = float('.'.join(v.split('.')[:2]))
+
+# Database Path
 tcc_db = '/Library/Application Support/com.apple.TCC/TCC.db'
-conn = sqlite3.connect(tcc_db)
-c = conn.cursor()
+
+sudo = False
+if os.getuid() == 0:
+    sudo = True
+    conn = sqlite3.connect(tcc_db)
+    c = conn.cursor()
+
 
 ##############################
 ######## FUNCTIONS ###########
+
 def usage(e=None):
 	#------------------------
-    name = os.path.basename(sys.argv[0])
-    print "  _                 _   _  _ "
-    print " | |_ ___ ___ _   _| |_( )| |"
-    print " | __/ __/ __| | | | __| || |"
-    print " | || (_| (__| |_| | |_| || |"
-    print "  \__\___\___|\__,_|\__|_||_|"
-    print "                                     "
-    print "Copyright 2014. Jacob Salmela.  http://jacobsalmela.com"
-    print "                                     "
-    print "USAGE:--------------------"
-    print "                                     "
-    print "	%s -h [--help]" % (name,)
-    print "	%s -v [--verbose]" % (name,)
-    print "	%s -l [--list]" % (name,)
-    print "	%s -i [--insert] <bundle id or path to command line utilty>" % (name,)
-    print "	%s -r [--remove] <bundle id or path to command line utilty>" % (name,)
-    print "	%s -e [--enable] <bundle id or path to command line utilty>" % (name,)
-    print "	%s -d [--disable] <bundle id or path to command line utilty>" % (name,)
+    print "Usage:"
+    print "  %s [--help]" % (name,)
+    print "  sudo %s [--list]" % (name,)
+    print "  sudo %s [--insert | --remove | --enable | --disable] [<bundle_id | cli_path>] [--verbose]" % (name,)
+    print ""
+    print "Options:"
+    print "  -h | --help      Displays this Help Menu."
+    print "  -l | --list      Lists all Entries in the Accessibility Database."
+    print "  -i | --insert    Adds the given Bundle ID or Path to the Accessibility Database."
+    print "  -r | --remove    Removes the given Bundle ID or Path from the Accessibility Database."
+    print "  -e | --enable    Enables Accessibility Access for the given Bundle ID or Path."
+    print "  -d | --disable   Disables Accessibility Access for the given Bundle ID or Path."
+    print "  -v | --verbose   Outputs additional info for some commands."
     print ""
 
-	
+
+def sudo_required():
+	#------------------------
+	if sudo == False:
+		print "Error:"
+		print "  When accessing the Accessibility Database,"
+		print "  %s needs to be run with admin-privileges." % (name,)
+		print ""
+		usage()
+		sys.exit(1)
+
 def commit_changes():
 	#------------------------
 	# Apply the changes and close the sqlite connection
@@ -55,16 +76,17 @@ def verboseOutput(*args):
 			print "Verbose:", args
 		except:
 			pass
- 
-	
+
+
 def list_clients():
 	#------------------------
+	sudo_required()
 	print c.execute("SELECT client from access")
 	for row in c.fetchall():
 		# Print each entry in the Accessibility pane
 		print row[0]
-		
-		
+
+
 def cli_util_or_bundle_id(client):
 	#------------------------
 	global client_type
@@ -76,45 +98,49 @@ def cli_util_or_bundle_id(client):
 	# Otherwise, the app will be a bundle ID, which starts with a com., net., or org., etc.
 	else:
 		#print 'Bundle ID detected'
-		client_type = 0	
-		
+		client_type = 0
+
 
 def insert_client(client):
 	#------------------------
+	sudo_required()
 	# Check if it is a command line utility or a bundle ID as the default value to enable it is different
 	cli_util_or_bundle_id(client)
 	#print "Client type: " + str(client_type)
 	#print "INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL)" % (client,client_type)
-	if v > 10.10: # El Capitan+
+	if v > 10.10: # El Capitan or higher.
 		c.execute("INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL,NULL)" % (client,client_type))
-	else: # Yosemite
+	else: # Yosemite or lower.
 		c.execute("INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL)" % (client,client_type))
 	commit_changes()
-	
-	
+
+
 def delete_client(client):
 	#------------------------
-	#print "DELETE from access where client IS %s" % (client)	
+	sudo_required()
+	#print "DELETE from access where client IS %s" % (client)
 	c.execute("DELETE from access where client IS '%s'" % (client))
 	commit_changes()
-	
+
 
 def enable(client):
 	#------------------------
+	sudo_required()
 	# Setting typically appears in System Preferences right away (without closing the window)
 	# Set to 1 to enable the client
 	c.execute("UPDATE access SET allowed='1' WHERE client='%s'" % (client))
 	commit_changes()
-		
-	
+
+
 def disable(client):
 	#------------------------
+	sudo_required()
 	# Setting typically appears in System Preferences right away (without closing the window)
 	# Set to 0 to disable the client
 	c.execute("UPDATE access SET allowed='0' WHERE client='%s'" % (client))
 	commit_changes()
 
-	
+
 
 #------------------------
 #------------------------
@@ -133,7 +159,7 @@ def main():
 		sys.exit(2)
 	# Verbosity off by default
 	verbose = False
-	
+
 	# Parse arguments for options
 	for o, a in opts:
 		if o in ("-h", "--help"):
@@ -154,9 +180,9 @@ def main():
 			disable(a)
 		else:
 			assert False, "unhandled option"
-		
-		
-		
+
+
+
 
 
 if __name__ == "__main__":
