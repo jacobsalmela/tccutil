@@ -81,7 +81,7 @@ def verboseOutput(*args):
 def list_clients():
 	#------------------------
 	sudo_required()
-	print c.execute("SELECT client from access")
+	c.execute("SELECT client from access")
 	for row in c.fetchall():
 		# Print each entry in the Accessibility pane
 		print row[0]
