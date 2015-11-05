@@ -97,7 +97,6 @@ def cli_util_or_bundle_id(client):
 		client_type = 1
 	# Otherwise, the app will be a bundle ID, which starts with a com., net., or org., etc.
 	else:
-		#print 'Bundle ID detected'
 		client_type = 0
 
 
@@ -106,8 +105,6 @@ def insert_client(client):
 	sudo_required()
 	# Check if it is a command line utility or a bundle ID as the default value to enable it is different
 	cli_util_or_bundle_id(client)
-	#print "Client type: " + str(client_type)
-	#print "INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL)" % (client,client_type)
 	if v > 10.10: # El Capitan or higher.
 		c.execute("INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL,NULL)" % (client,client_type))
 	else: # Yosemite or lower.
@@ -118,7 +115,6 @@ def insert_client(client):
 def delete_client(client):
 	#------------------------
 	sudo_required()
-	#print "DELETE from access where client IS %s" % (client)
 	c.execute("DELETE from access where client IS '%s'" % (client))
 	commit_changes()
 
