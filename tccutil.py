@@ -81,14 +81,20 @@ def open_database():
 
 def close_database():
   #------------------------
-  verbose_output("Closing Database...")
   try:
-    conn.close()
-    try: conn.execute("")
-    except: verbose_output("Database closed.")
+    conn.execute("")
+    try:
+      verbose_output("Closing Database...")
+      conn.close()
+      try:
+        conn.execute("")
+      except:
+        verbose_output("Database closed.")
+    except:
+      print "Error closing Database."
+      sys.exit(1)
   except:
-    print "Error closing Database."
-    sys.exit(1)
+    pass
 
 
 def commit_changes():
@@ -117,8 +123,6 @@ def list_clients():
     # Print each entry in the Accessibility pane.
     print row[0]
   verbose_output("")
-  close_database()
-  sys.exit(0)
 
 
 def cli_util_or_bundle_id(client):
@@ -229,6 +233,7 @@ def main():
       assert False, "unhandled option"
 
   close_database()
+  sys.exit(0)
 
 
 
