@@ -1,72 +1,85 @@
-tccutil.py
+`tccutil.py`
 ==========
 
-## Modify the OS X Accessiblity Database from the command line
+<p align="center"><img src='http://i2.wp.com/jacobsalmela.com/wp-content/uploads/2014/07/tccutilicon.png?resize=128%2C128' alt='tccutil.py logo'/></p>
+
+
+## Modify OS X's Accessiblity Database from the Command Line
 Apple has a utility in `/usr/bin` named `tccutil`, but it only supports one command, which is to `reset` the entire database.  I wanted a command-line utility that would be able to add, remove, list, and take other actions.
 
-![tccutil.py logo](http://i2.wp.com/jacobsalmela.com/wp-content/uploads/2014/07/tccutilicon.png?resize=300%2C300)
 
-## How is tccutil.py Different?
-**tccutil.py** can just be installed to `/usr/sbin` without any additional software. It can then be **run just like any other command line tool**.  I also wanted the syntax to be easy to remember without having to look it up in the usage line.  There are other solutions out there, but there were some things I did not like about them:
+## How is `tccutil.py` Different?
 
-+ [Privacy Manager Services](https://github.com/univ-of-utah-marriott-library-apple/privacy_services_manager)--has other dependencies that need to be installed
+`tccutil.py` can just be installed to `/usr/sbin` without any additional software.
 
-+ [tccmanager.py](https://github.com/timsutton/scripts/blob/master/tccmanager/tccmanager.py)--uses a .plist to add items, which is inconvenient
+It can then be run **just like any other command line tool**. I also wanted the syntax to be easy to remember without having to look it up in the help menu.
+
+There are other solutions out there, but there were some things I did not like about them:
+
++ [Privacy Manager Services](https://github.com/univ-of-utah-marriott-library-apple/privacy_services_manager) has other dependencies that need to be installed.
+
++ [tccmanager.py](https://github.com/timsutton/scripts/blob/master/tccmanager/tccmanager.py) uses a `.plist` to add items, which is inconvenient.
+
 
 ## Usage
 
-### This utility needs super-user priveleges.  Run this as root or use `sudo`.
-It is important that you either run this as root or use `sudo`, otherwise, it will not work and you will end up with "permission denied" errors.
+### This utility needs super-user priveleges for most operations.
 
-`sudo tccutil.py -h [--help]`
+It is important that you either run this as root or use `sudo`, otherwise it won't work and you will end up with “permission denied” errors.
 
-`sudo tccutil.py -l [--list]`
+```
+Usage:
+  tccutil.py [--help]
+  sudo tccutil.py [--list]
+  sudo tccutil.py [--insert | --remove | --enable | --disable] [<bundle_id | cli_path>] [--verbose]
 
-`sudo tccutil.py -i [--insert] <bundle id or path to command line utilty>`
+  tccutil.py reset <service> (pass through to OS X's built-in command)
 
-`sudo tccutil.py -r [--remove] <bundle id or path to command line utilty>`
-
-`sudo tccutil.py -e [--enable] <bundle id or path to command line utilty>`
-
-`sudo tccutil.py -d [--disable] <bundle id or path to command line utilty>`
+Options:
+  -h | --help      Displays this Help Menu.
+  -l | --list      Lists all Entries in the Accessibility Database.
+  -i | --insert    Adds the given Bundle ID or Path to the Accessibility Database.
+  -r | --remove    Removes the given Bundle ID or Path from the Accessibility Database.
+  -e | --enable    Enables Accessibility Access for the given Bundle ID or Path.
+  -d | --disable   Disables Accessibility Access for the given Bundle ID or Path.
+  -v | --verbose   Outputs additional info for some commands.
+```
 
 ### Examples
-List existing entries in the Accessibility database
 
-`sudo tccutil.py -l`
+List existing Entries in the Accessibility Database
 
-Add `/usr/bin/osascript` into the Accessibility database (using UNIX-style options)
+    sudo tccutil.py --list
 
-`sudo tccutil.py -i /usr/bin/osascript`
+Add `/usr/bin/osascript` to the Accessibility Database (using UNIX-Style Option)
 
-Add TextExpander into the Accessibility database (using long options)
+    sudo tccutil.py -i /usr/bin/osascript
 
-`sudo tccutil.py --insert com.smileonmymac.textexpander`
+Add *Script Editor* to the Accessibility Database (using Long Option)
 
-`sudo tccutil.py --insert com.smileonmymac.textexpander.helper`
+    sudo tccutil.py --insert com.apple.ScriptEditor2
 
-Remove Chrome from the Accessibility database
+Remove *Terminal* from the Accessibility Database
 
-`sudo tccutil.py -r com.google.chrome`
+    sudo tccutil.py --remove com.apple.Terminal
 
-Enable Chrome (must already exist in the list)
+Enable *Terminal* (must already exist in the Database)
 
-`sudo tccutil.py --enable com.google.chrome`
+    sudo tccutil.py --enable com.apple.Terminal
 
-Disable /usr/sbin/jamfAgent (must already exist in the list)
+Disable `/usr/bin/osascript` (must already exist in the Database)
 
-`sudo tccutil.py -d /usr/sbin/jamfAgent`
+    sudo tccutil.py -d /usr/bin/osascript
+
 
 ## Current Feature Set
 
-1. List existing entries in Accessibility database
-2. Insert new item into Accessibility database (even command-line utilities)
-3. Remove an existing item from the Accessibility database
-4. Enable or disable an entry
+1. List existing Entries in Accessibility Database
+2. Insert new Item into Accessibility Database (even Command-Line Utilities)
+3. Remove an existing Item from the Accessibility Database
+4. Enable or disable an Entry
 
 
 ## Planned Features
 
-1. Verbosity
-2. --Enable or disable an existing entry-- **COMPLETE**
-3. Modify other parts of the TCC.db
+1. Modify other parts of the `TCC.db`.
