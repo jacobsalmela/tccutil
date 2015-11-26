@@ -41,6 +41,8 @@ def usage(error_code=None):
   print "  sudo %s [--list]" % (util_name)
   print "  sudo %s [--insert | --remove | --enable | --disable] [<bundle_id | cli_path>] [--verbose]" % (util_name)
   print ""
+  print "  %s reset <service> (pass through to OS X's built-in command)" % (util_name)
+  print ""
   print "Options:"
   print "  -h | --help      Displays this Help Menu."
   print "  -l | --list      Lists all Entries in the Accessibility Database."
@@ -182,18 +184,22 @@ def disable(client):
 
 
 
-#------------------------
-#------------------------
-#------------------------
 def main():
   #------------------------
-  #------------------------
-  #------------------------
+
   # If no arguments are specified, show help menu and exit.
   if not sys.argv[1:]:
     print "Error:"
     print "  No arguments.\n"
     usage(2)
+
+  # Pass reset option to OS X's built-in tccutil.
+  if sys.argv[1] == "reset":
+    args = ''
+    for arg in sys.argv[1:]:
+      args += " %s" % arg
+    exit_status = os.system("tccutil %s" % args)
+    sys.exit(exit_status/256)
 
   try:
     # First arguments are UNIX-style, single-letter arguments. Those requiring arguments are followed by an :.
