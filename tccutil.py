@@ -41,6 +41,8 @@ def usage(error_code=None):
   print "  sudo %s [--list]" % (util_name)
   print "  sudo %s [--insert | --remove | --enable | --disable] [<bundle_id | cli_path>] [--verbose]" % (util_name)
   print ""
+  print "  %s reset <service> (pass through to OS X's built-in command)" % (util_name)
+  print ""
   print "Options:"
   print "  -h | --help      Displays this Help Menu."
   print "  -l | --list      Lists all Entries in the Accessibility Database."
@@ -81,14 +83,20 @@ def open_database():
 
 def close_database():
   #------------------------
-  verbose_output("Closing Database...")
   try:
-    conn.close()
-    try: conn.execute("")
-    except: verbose_output("Database closed.")
+    conn.execute("")
+    try:
+      verbose_output("Closing Database...")
+      conn.close()
+      try:
+        conn.execute("")
+      except:
+        verbose_output("Database closed.")
+    except:
+      print "Error closing Database."
+      sys.exit(1)
   except:
-    print "Error closing Database."
-    sys.exit(1)
+    pass
 
 
 def commit_changes():
@@ -117,8 +125,6 @@ def list_clients():
     # Print each entry in the Accessibility pane.
     print row[0]
   verbose_output("")
-  close_database()
-  sys.exit(0)
 
 
 def cli_util_or_bundle_id(client):
@@ -178,18 +184,22 @@ def disable(client):
 
 
 
-#------------------------
-#------------------------
-#------------------------
 def main():
   #------------------------
-  #------------------------
-  #------------------------
+
   # If no arguments are specified, show help menu and exit.
   if not sys.argv[1:]:
     print "Error:"
     print "  No arguments.\n"
     usage(2)
+
+  # Pass reset option to OS X's built-in tccutil.
+  if sys.argv[1] == "reset":
+    args = ''
+    for arg in sys.argv[1:]:
+      args += " %s" % arg
+    exit_status = os.system("tccutil %s" % args)
+    sys.exit(exit_status/256)
 
   try:
     # First arguments are UNIX-style, single-letter arguments. Those requiring arguments are followed by an :.
@@ -229,6 +239,7 @@ def main():
       assert False, "unhandled option"
 
   close_database()
+  sys.exit(0)
 
 
 
