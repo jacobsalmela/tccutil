@@ -35,6 +35,8 @@ Usage:
 
   tccutil.py reset <service> (pass through to OS X's built-in command)
 
+    <service> names: [ Accessibility | AddressBook | Calendar | CoreLocationAgent |Facebook | Reminders | Twitter]
+
 Options:
   -h | --help      Displays this Help Menu.
   -l | --list      Lists all Entries in the Accessibility Database.

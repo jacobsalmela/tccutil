@@ -43,6 +43,8 @@ def usage(error_code=None):
   print ""
   print "  %s reset <service> (pass through to OS X's built-in command)" % (util_name)
   print ""
+  print "     <service> names: [ Accessibility | AddressBook | Calendar | CoreLocationAgent |Facebook | Reminders | Twitter]"
+  print ""
   print "Options:"
   print "  -h | --help      Displays this Help Menu."
   print "  -l | --list      Lists all Entries in the Accessibility Database."
