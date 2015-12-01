@@ -18,6 +18,9 @@ from distutils.version import StrictVersion as version
 # Utility Name
 util_name = os.path.basename(sys.argv[0])
 
+# Current version of this utility
+tccutil_version = '1.2.0'
+
 # Current OS X version
 osx_version = version(mac_ver()[0])
 
@@ -53,6 +56,7 @@ def usage(error_code=None):
   print "  -e | --enable    Enables Accessibility Access for the given Bundle ID or Path."
   print "  -d | --disable   Disables Accessibility Access for the given Bundle ID or Path."
   print "  -v | --verbose   Outputs additional info for some commands."
+  print "       --version   Prints the current version of this utility."
   if error_code != None: sys.exit(error_code)
 
 
@@ -206,7 +210,7 @@ def main():
   try:
     # First arguments are UNIX-style, single-letter arguments. Those requiring arguments are followed by an :.
     # Second list are long options. Those requiring arguments are followed by an =.
-    opts, args = getopt.getopt(sys.argv[1:], "hlvi:r:e:d:", ['help', 'list', 'verbose', 'insert=', 'remove=', 'enable=', 'disable='])
+    opts, args = getopt.getopt(sys.argv[1:], "hlvi:r:e:d:", ['help', 'version', 'list', 'verbose', 'insert=', 'remove=', 'enable=', 'disable='])
   except getopt.GetoptError as option_error:
       # If unknown options are specified, show help menu and exit.
     print "Error:"
@@ -227,6 +231,8 @@ def main():
   for opt, arg in opts:
     if opt in ('-h', '--help'):
       usage(0)
+    elif opt in ('--version'):
+      print(tccutil_version)
     elif opt in ('-l', '--list'):
       list_clients()
     elif opt in ('-i', '--insert'):
