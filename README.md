@@ -29,13 +29,12 @@ It is important that you either run this as root or use `sudo`, otherwise it won
 
 ```
 Usage:
-  tccutil.py [--help]
-  sudo tccutil.py [--list]
-  sudo tccutil.py [--insert | --remove | --enable | --disable] [<bundle_id | cli_path>] [--verbose]
+  tccutil.py [--help | --version]
+  sudo tccutil.py [--list] [--verbose]
+  sudo tccutil.py [--insert | --remove | --enable | --disable] <bundle_id | cli_path> [--verbose]
 
-  tccutil.py reset <service> (pass through to OS X's built-in command)
-
-    <service> names: [ Accessibility | AddressBook | Calendar | CoreLocationAgent |Facebook | Reminders | Twitter]
+Pass through reset command to built-in OS X utility:
+  tccutil.py reset <Accessibility | AddressBook | Calendar | CoreLocationAgent | Facebook | Reminders | Twitter>
 
 Options:
   -h | --help      Displays this Help Menu.
@@ -45,6 +44,7 @@ Options:
   -e | --enable    Enables Accessibility Access for the given Bundle ID or Path.
   -d | --disable   Disables Accessibility Access for the given Bundle ID or Path.
   -v | --verbose   Outputs additional info for some commands.
+       --version   Prints the current version of this utility.
 ```
 
 ### Examples
