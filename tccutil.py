@@ -18,8 +18,8 @@ from distutils.version import StrictVersion as version
 # Utility Name
 util_name = os.path.basename(sys.argv[0])
 
-# Current version of this utility
-tccutil_version = '1.2.0'
+# Utility Version
+util_version = '1.2.1'
 
 # Current OS X version
 osx_version = version(mac_ver()[0])
@@ -27,7 +27,7 @@ osx_version = version(mac_ver()[0])
 # Database Path
 tcc_db = '/Library/Application Support/com.apple.TCC/TCC.db'
 
-# Set "sudo" to True if called with admin-privileges.
+# Set "sudo" to True if called with Admin-Privileges.
 sudo = True if os.getuid() == 0 else False
 
 # Default Verbosity
@@ -37,16 +37,21 @@ verbose = False
 ##############################
 ######## FUNCTIONS ###########
 
-def usage(error_code=None):
+def display_version():
+  #------------------------
+	print "%s %s" % (util_name, util_version)
+	sys.exit(0)
+
+
+def display_help(error_code=None):
   #------------------------
   print "Usage:"
-  print "  %s [--help]" % (util_name)
-  print "  sudo %s [--list]" % (util_name)
-  print "  sudo %s [--insert | --remove | --enable | --disable] [<bundle_id | cli_path>] [--verbose]" % (util_name)
+  print "  %s [--help | --version]" % (util_name)
+  print "  sudo %s [--list] [--verbose]" % (util_name)
+  print "  sudo %s [--insert | --remove | --enable | --disable] <bundle_id | cli_path> [--verbose]" % (util_name)
   print ""
-  print "  %s reset <service> (pass through to OS X's built-in command)" % (util_name)
-  print ""
-  print "     <service> names: [ Accessibility | AddressBook | Calendar | CoreLocationAgent |Facebook | Reminders | Twitter]"
+  print "Pass through reset command to built-in OS X utility:"
+  print "  %s reset <Accessibility | AddressBook | Calendar | CoreLocationAgent | Facebook | Reminders | Twitter>" % (util_name)
   print ""
   print "Options:"
   print "  -h | --help      Displays this Help Menu."
@@ -65,7 +70,7 @@ def sudo_required():
   if not sudo:
     print "Error:"
     print "  When accessing the Accessibility Database, %s needs to be run with admin-privileges.\n" % (util_name)
-    usage(1)
+    display_help(1)
 
 
 def open_database():
@@ -197,7 +202,7 @@ def main():
   if not sys.argv[1:]:
     print "Error:"
     print "  No arguments.\n"
-    usage(2)
+    display_help(2)
 
   # Pass reset option to OS X's built-in tccutil.
   if sys.argv[1] == "reset":
@@ -215,7 +220,7 @@ def main():
       # If unknown options are specified, show help menu and exit.
     print "Error:"
     print "  %s\n" % (option_error)
-    usage(2)
+    display_help(2)
 
   # If verbose option is set, set verbose to True and remove all verbose arguments.
   global verbose
@@ -230,9 +235,9 @@ def main():
   # Parse arguments for options
   for opt, arg in opts:
     if opt in ('-h', '--help'):
-      usage(0)
+      display_help(0)
     elif opt in ('--version'):
-      print(tccutil_version)
+      display_version()
     elif opt in ('-l', '--list'):
       list_clients()
     elif opt in ('-i', '--insert'):
