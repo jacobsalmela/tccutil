@@ -29,27 +29,6 @@ sudo = True if os.getuid() == 0 else False
 verbose = False
 
 
-##############################
-######## FUNCTIONS ###########
-
-def display_version():
-  #------------------------
-	print "%s %s" % (util_name, util_version)
-	sys.exit(0)
-
-
-
-
-def sudo_required():
-  #------------------------
-  if not sudo:
-    print "Error:"
-    print "  When accessing the Accessibility Database, %s needs to be run with admin-privileges.\n" % (util_name)
-    display_help(1)
-
-
-def open_database():
-  #------------------------
 parser = argparse.ArgumentParser(description='Modify Accesibility Preferences')
 parser.add_argument(
   'action',
@@ -86,6 +65,27 @@ parser.add_argument(
   '--version', action='store_true',
   help="Show the version of this script",
 )
+
+
+##############################
+######## FUNCTIONS ###########
+
+def display_version():
+  #------------------------
+	print "%s %s" % (util_name, util_version)
+	sys.exit(0)
+
+
+def sudo_required():
+  #------------------------
+  if not sudo:
+    print "Error:"
+    print "  When accessing the Accessibility Database, %s needs to be run with admin-privileges.\n" % (util_name)
+    display_help(1)
+
+
+def open_database():
+  #------------------------
   sudo_required()
   global conn
   global c
@@ -221,8 +221,6 @@ def disable(client):
   # Set to 0 to disable the client.
   c.execute("UPDATE access SET allowed='0' WHERE client='%s'" % (client))
   commit_changes()
-
-
 
 
 def main():
