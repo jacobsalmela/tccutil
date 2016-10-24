@@ -234,6 +234,10 @@ def main():
 
   args = parser.parse_args()
 
+  if args.version:
+    display_version()
+    return
+
   if args.action:
     if args.action == 'reset':
       exit_status = os.system("tccutil {}".format(' '.join(sys.argv[1:])))
