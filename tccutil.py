@@ -1,12 +1,7 @@
 #!/usr/bin/env python
-
-
-##############################
-######### IMPORTS ############
-
+import argparse
 import sqlite3
 import sys
-import getopt
 import os
 from platform import mac_ver
 from distutils.version import StrictVersion as version
@@ -34,6 +29,44 @@ sudo = True if os.getuid() == 0 else False
 verbose = False
 
 
+parser = argparse.ArgumentParser(description='Modify Accesibility Preferences')
+parser.add_argument(
+  'action',
+  metavar='ACTION',
+  type=str,
+  nargs='?',
+  help='This option is only used to perform a reset.',
+)
+parser.add_argument(
+  '--list', '-l', action='store_true',
+  help="List all entries in the accessibility database."
+)
+parser.add_argument(
+  '--insert', '-i', action='append', default=[],
+  help="Adds the given bundle ID or path to the accessibility database.",
+)
+parser.add_argument(
+  "-v", "--verbose", action='store_true',
+  help="Outputs additional info for some commands.",
+)
+parser.add_argument(
+  "-r", "--remove", action='append', default=[],
+  help="Removes the given Bundle ID or Path from the Accessibility Database.",
+)
+parser.add_argument(
+  "-e", "--enable", action='append', default=[],
+  help="Enables Accessibility Access for the given Bundle ID or Path.",
+)
+parser.add_argument(
+  "-d", "--disable", action='append', default=[],
+  help="Disables Accessibility Access for the given Bundle ID or Path."
+)
+parser.add_argument(
+  '--version', action='store_true',
+  help="Show the version of this script",
+)
+
+
 ##############################
 ######## FUNCTIONS ###########
 
@@ -41,28 +74,6 @@ def display_version():
   #------------------------
 	print "%s %s" % (util_name, util_version)
 	sys.exit(0)
-
-
-def display_help(error_code=None):
-  #------------------------
-  print "Usage:"
-  print "  %s [--help | --version]" % (util_name)
-  print "  sudo %s [--list] [--verbose]" % (util_name)
-  print "  sudo %s [--insert | --remove | --enable | --disable] <bundle_id | cli_path> [--verbose]" % (util_name)
-  print ""
-  print "Pass through reset command to built-in OS X utility:"
-  print "  %s reset <Accessibility | AddressBook | Calendar | CoreLocationAgent | Facebook | Reminders | Twitter>" % (util_name)
-  print ""
-  print "Options:"
-  print "  -h | --help      Displays this Help Menu."
-  print "  -l | --list      Lists all Entries in the Accessibility Database."
-  print "  -i | --insert    Adds the given Bundle ID or Path to the Accessibility Database."
-  print "  -r | --remove    Removes the given Bundle ID or Path from the Accessibility Database."
-  print "  -e | --enable    Enables Accessibility Access for the given Bundle ID or Path."
-  print "  -d | --disable   Disables Accessibility Access for the given Bundle ID or Path."
-  print "  -v | --verbose   Outputs additional info for some commands."
-  print "       --version   Prints the current version of this utility."
-  if error_code != None: sys.exit(error_code)
 
 
 def sudo_required():
@@ -92,8 +103,27 @@ def open_database():
       sys.exit(1)
 
 
-def close_database():
+def display_version(error_code=None):
+  print "%s %s" % (util_name, util_version)
+  sys.exit(0)
+
+
+def sudo_required():
+  if not sudo:
+    print "Error:"
+    print "  When accessing the Accessibility Database, %s needs to be run with admin-privileges.\n" % (util_name)
+    display_help(1)
+
+
+def display_help(error_code=None):
+  parser.print_help()
+  if error_code != None: sys.exit(error_code)
   #------------------------
+  print "%s %s" % (util_name, util_version)
+  sys.exit(0)
+
+
+def close_database():
   try:
     conn.execute("")
     try:
@@ -193,8 +223,6 @@ def disable(client):
   commit_changes()
 
 
-
-
 def main():
   #------------------------
 
@@ -204,57 +232,42 @@ def main():
     print "  No arguments.\n"
     display_help(2)
 
-  # Pass reset option to OS X's built-in tccutil.
-  if sys.argv[1] == "reset":
-    args = ''
-    for arg in sys.argv[1:]:
-      args += " %s" % arg
-    exit_status = os.system("tccutil %s" % args)
-    sys.exit(exit_status/256)
+  args = parser.parse_args()
 
-  try:
-    # First arguments are UNIX-style, single-letter arguments. Those requiring arguments are followed by an :.
-    # Second list are long options. Those requiring arguments are followed by an =.
-    opts, args = getopt.getopt(sys.argv[1:], "hlvi:r:e:d:", ['help', 'version', 'list', 'verbose', 'insert=', 'remove=', 'enable=', 'disable='])
-  except getopt.GetoptError as option_error:
-      # If unknown options are specified, show help menu and exit.
-    print "Error:"
-    print "  %s\n" % (option_error)
-    display_help(2)
+  if args.version:
+    display_version()
+    return
 
-  # If verbose option is set, set verbose to True and remove all verbose arguments.
-  global verbose
-  delete_indexes = []
-  for idx, (opt, arg) in enumerate(opts):
-    if opt in ('-v', '--verbose'):
-      verbose = True
-      delete_indexes.insert(0,idx)
-  for idx in delete_indexes:
-    del opts[idx]
-
-  # Parse arguments for options
-  for opt, arg in opts:
-    if opt in ('-h', '--help'):
-      display_help(0)
-    elif opt in ('--version'):
-      display_version()
-    elif opt in ('-l', '--list'):
-      list_clients()
-    elif opt in ('-i', '--insert'):
-      insert_client(arg)
-    elif opt in ('-r', '--remove'):
-      delete_client(arg)
-    elif opt in ('-e', '--enable'):
-      enable(arg)
-    elif opt in ('-d', '--disable'):
-      disable(arg)
+  if args.action:
+    if args.action == 'reset':
+      exit_status = os.system("tccutil {}".format(' '.join(sys.argv[1:])))
+      sys.exit(exit_status/256)
     else:
-      assert False, "unhandled option"
+      print "Error\n  Unrecognized command {}".format(args.action)
+
+  if args.verbose:
+    # If verbose option is set, set verbose to True and remove all verbose arguments.
+    global verbose
+    verbose = True
+
+  if args.list:
+    list_clients()
+    return
+
+  for item_to_remove in args.remove:
+    delete_client(item_to_remove)
+
+  for item in args.insert:
+    insert_client(item)
+
+  for item in args.enable:
+    enable(item)
+
+  for item in args.disable:
+    disable(item)
 
   close_database()
   sys.exit(0)
-
-
 
 
 if __name__ == '__main__':
