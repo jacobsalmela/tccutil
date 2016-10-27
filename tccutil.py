@@ -3,6 +3,7 @@ import argparse
 import sqlite3
 import sys
 import os
+import hashlib
 from platform import mac_ver
 from distutils.version import StrictVersion as version
 
@@ -95,8 +96,27 @@ def open_database():
   except:
     verbose_output("Opening Database...")
     try:
+      if not os.path.isfile(tcc_db):
+        print "TCC Database has not been found."
+        sys.exit(1)
       conn = sqlite3.connect(tcc_db)
       c = conn.cursor()
+
+      # Do a sanity check that TCC access table has expected structure
+      c.execute("SELECT sql FROM sqlite_master WHERE name='access' and type='table'")
+      accessTableDigest=""
+      for row in c.fetchall():
+        accessTableDigest=hashlib.sha1(row[0]).hexdigest()[0:10]
+        break;
+      # check if table in DB has expected structure:
+      if not (
+        accessTableDigest == "8e93d38f7c" #prior to El Capitan
+        or
+        (osx_version >= version('10.11') and accessTableDigest=="9b2ea61b30")
+      ):
+        print "TCC Database structure is unknown."
+        sys.exit(1)
+
       verbose_output("Database opened.\n")
     except:
       print "Error opening Database."
