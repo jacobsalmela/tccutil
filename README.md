@@ -30,7 +30,9 @@ Due to SIP, this utility will no longer work to modify the database (see [#18](h
 
 + Install using Homebrew, then run with `tccutil`:
 
+```
       brew install tccutil
+```
 
 Depending how you have your `$PATH` variable setup, you can simply type `tccutil` (instead of the full path) and it will run this utility instead of Apple's.
 
