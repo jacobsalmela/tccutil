@@ -112,7 +112,7 @@ def open_database():
       if not (
         accessTableDigest == "8e93d38f7c" #prior to El Capitan
         or
-        (osx_version >= version('10.11') and accessTableDigest=="9b2ea61b30")
+        (osx_version >= version('10.11') and accessTableDigest in ["9b2ea61b30", "1072dc0e4b"])
       ):
         print "TCC Database structure is unknown."
         sys.exit(1)
