@@ -15,7 +15,7 @@ from distutils.version import StrictVersion as version
 util_name = os.path.basename(sys.argv[0])
 
 # Utility Version
-util_version = '1.2.3'
+util_version = '1.2.4'
 
 # Current OS X version
 osx_version = version(mac_ver()[0])
@@ -112,7 +112,7 @@ def open_database():
       if not (
         accessTableDigest == "8e93d38f7c" #prior to El Capitan
         or
-        (osx_version >= version('10.11') and accessTableDigest in ["9b2ea61b30", "1072dc0e4b"])
+        (osx_version >= version('10.11') and accessTableDigest in ["9b2ea61b30", "1072dc0e4b", "80a4bb6912"])
       ):
         print "TCC Database structure is unknown."
         sys.exit(1)
