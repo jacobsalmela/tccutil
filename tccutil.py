@@ -15,7 +15,7 @@ from distutils.version import StrictVersion as version
 util_name = os.path.basename(sys.argv[0])
 
 # Utility Version
-util_version = '1.2.3'
+util_version = '1.2.4'
 
 # Current OS X version
 osx_version = version(mac_ver()[0])
@@ -112,7 +112,7 @@ def open_database():
       if not (
         accessTableDigest == "8e93d38f7c" #prior to El Capitan
         or
-        (osx_version >= version('10.11') and accessTableDigest in ["9b2ea61b30", "1072dc0e4b"])
+        (osx_version >= version('10.11') and accessTableDigest in ["9b2ea61b30", "1072dc0e4b", "80a4bb6912", "ecc443615f"])
       ):
         print "TCC Database structure is unknown."
         sys.exit(1)
@@ -208,7 +208,9 @@ def insert_client(client):
   # Check if it is a command line utility or a bundle ID as the default value to enable it is different.
   cli_util_or_bundle_id(client)
   verbose_output("Inserting \"%s\" into Database..." % (client))
-  if osx_version >= version('10.11'): # El Capitan or higher.
+  if osx_version >= version('10.14'): # Mojave or higher.
+    c.execute("INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL,0,0,NULL,NULL,0,NULL)" % (client, client_type))
+  elif osx_version >= version('10.11'): # El Capitan or higher.
     c.execute("INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL,NULL)" % (client, client_type))
   else: # Yosemite or lower.
     c.execute("INSERT or REPLACE INTO access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL)" % (client, client_type))
