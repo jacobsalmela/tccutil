@@ -196,7 +196,7 @@ def insert_client(client):
     verbose_output("Inserting \"%s\" into Database..." % (client))
     if osx_version >= version('10.14'):  # Mojave and later
         c.execute("INSERT or REPLACE INTO \
-access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL,NULL,NULL,'UNUSED',NULL,0,strftime('%s','now'))"
+access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL,NULL,NULL,'UNUSED',NULL,0,0)"
                   % (client, client_type))
     elif osx_version >= version('10.11'):  # El Capitan through Mojave
         c.execute("INSERT or REPLACE INTO \
