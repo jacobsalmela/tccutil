@@ -11,7 +11,7 @@ from distutils.version import StrictVersion as version
 util_name = os.path.basename(sys.argv[0])
 
 # Utility Version
-util_version = '1.2.6'
+util_version = '1.2.7'
 
 # Current OS X version
 osx_version = version(mac_ver()[0])
