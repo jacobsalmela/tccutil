@@ -113,7 +113,7 @@ def open_database():
 
         verbose_output("Database opened.\n")
     except:
-        print("Error opening Database.  You probably need to disable SIP for this to work.")
+        print("Error opening Database.  SIP needs to be disabled for this to work")
         sys.exit(1)
 
 
