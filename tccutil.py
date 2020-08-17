@@ -26,6 +26,10 @@ sudo = True if os.getuid() == 0 else False
 verbose = False
 
 
+# TCC Service
+service = "kTCCServiceAccessibility"
+
+
 parser = argparse.ArgumentParser(description='Modify Accesibility Preferences')
 parser.add_argument(
     'action',
@@ -33,6 +37,11 @@ parser.add_argument(
     type=str,
     nargs='?',
     help='This option is only used to perform a reset.',
+)
+parser.add_argument(
+    '--service', '-s',
+    default=service,
+    help="Set TCC service"
 )
 parser.add_argument(
     '--list', '-l', action='store_true',
@@ -163,7 +172,7 @@ def verbose_output(*args):
 def list_clients():
     """List items in the database."""
     open_database()
-    c.execute("SELECT client from access")
+    c.execute("SELECT client from access WHERE service is '%s'" % service)
     verbose_output("Fetching Entries from Database...\n")
     for row in c.fetchall():
         # print each entry in the Accessibility pane.
@@ -195,17 +204,14 @@ def insert_client(client):
     cli_util_or_bundle_id(client)
     verbose_output("Inserting \"%s\" into Database..." % (client))
     if osx_version >= version('10.14'):  # Mojave and later
-        c.execute("INSERT or REPLACE INTO \
-access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL,NULL,NULL,'UNUSED',NULL,0,0)"
-                  % (client, client_type))
+        c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL,NULL,NULL,'UNUSED',NULL,0,0)"
+                  % (service, client, client_type))
     elif osx_version >= version('10.11'):  # El Capitan through Mojave
-        c.execute("INSERT or REPLACE INTO \
-access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL,NULL)"
-                  % (client, client_type))
+        c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL,NULL)"
+                  % (service, client, client_type))
     else:  # Yosemite or lower.
-        c.execute("INSERT or REPLACE INTO \
-access VALUES('kTCCServiceAccessibility','%s',%s,1,1,NULL)"
-                  % (client, client_type))
+        c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL)"
+                  % (service, client, client_type))
     commit_changes()
 
 
@@ -213,7 +219,7 @@ def delete_client(client):
     """Remove a client from the database."""
     open_database()
     verbose_output("Removing \"%s\" from Database..." % (client))
-    c.execute("DELETE from access where client IS '%s'" % (client))
+    c.execute("DELETE from access where client IS '%s' AND service IS '%s'" % (client, service))
     commit_changes()
 
 
@@ -224,7 +230,7 @@ def enable(client):
     # Setting typically appears in System Preferences
     # right away (without closing the window).
     # Set to 1 to enable the client.
-    c.execute("UPDATE access SET allowed='1' WHERE client='%s'" % (client))
+    c.execute("UPDATE access SET allowed='1' WHERE client='%s' AND service IS '%s'" % (client, service))
     commit_changes()
 
 
@@ -235,7 +241,7 @@ def disable(client):
     # Setting typically appears in System Preferences
     # right away (without closing the window).
     # Set to 0 to disable the client.
-    c.execute("UPDATE access SET allowed='0' WHERE client='%s'" % (client))
+    c.execute("UPDATE access SET allowed='0' WHERE client='%s' AND service IS '%s'" % (client, service))
     commit_changes()
 
 
@@ -260,6 +266,9 @@ def main():
             sys.exit(exit_status/256)
         else:
             print("Error\n  Unrecognized command {}".format(args.action))
+
+    global service
+    service = args.service
 
     if args.verbose:
         # If verbose option is set, set verbose to True and remove all verbose arguments.
