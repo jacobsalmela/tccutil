@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+
+#****************************************************************************
+# tccutil.py, Utility to modify the macOS Accessibility Database (TCC.db)
+#
+# Copyright (C) 2020, @jacobsalmela
+#
+# This is free software; you can redistribute it and/or modify it under the
+# terms of the GNU General Public License, either Version 2 or any later
+# version.  This program is distributed in the hope that it will be useful,
+# but WITTHOUT ANY WARRANTY.  See the included LICENSE file for details.
+#*****************************************************************************
+
 import argparse
 import sqlite3
 import sys
