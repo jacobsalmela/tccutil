@@ -26,7 +26,7 @@ util_name = os.path.basename(sys.argv[0])
 util_version = '1.2.7'
 
 # Current OS X version
-osx_version = version(mac_ver()[0])
+osx_version = version(mac_ver()[0]) # mac_ver() returns 10.16 for Big Sur instead 11.+
 
 # Database Path
 tcc_db = '/Library/Application Support/com.apple.TCC/TCC.db'
@@ -36,7 +36,6 @@ sudo = True if os.getuid() == 0 else False
 
 # Default Verbosity
 verbose = False
-
 
 # TCC Service
 service = "kTCCServiceAccessibility"
@@ -127,8 +126,10 @@ def open_database():
         if not (accessTableDigest == "8e93d38f7c"  # prior to El Capitan
                 or (osx_version >= version('10.11')  # El Capitan , Sierra, High Sierra
 		    and accessTableDigest in ["9b2ea61b30", "1072dc0e4b"])
-                or (osx_version >= version('10.14')  # Mojave and later
-		    and accessTableDigest in ["ecc443615f", "80a4bb6912"])):
+                or (osx_version >= version('10.14')  # Mojave and Catalina
+		    and accessTableDigest in ["ecc443615f", "80a4bb6912"])
+                or (osx_version >= version('10.16') # Big Sur and later
+            and accessTableDigest == "3d1c2a0e97")):
             print("TCC Database structure is unknown.")
             sys.exit(1)
 
@@ -215,7 +216,10 @@ def insert_client(client):
     # as the default value to enable it is different.
     cli_util_or_bundle_id(client)
     verbose_output("Inserting \"%s\" into Database..." % (client))
-    if osx_version >= version('10.14'):  # Mojave and later
+    if osx_version >= version('10.16'): # Big Sur and later
+        c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,0)"
+                  % (service, client, client_type))
+    elif osx_version >= version('10.14'):  # Mojave through Big Sur
         c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL,NULL,NULL,'UNUSED',NULL,0,0)"
                   % (service, client, client_type))
     elif osx_version >= version('10.11'):  # El Capitan through Mojave
@@ -242,7 +246,8 @@ def enable(client):
     # Setting typically appears in System Preferences
     # right away (without closing the window).
     # Set to 1 to enable the client.
-    c.execute("UPDATE access SET allowed='1' WHERE client='%s' AND service IS '%s'" % (client, service))
+    enable_mode_name = 'auth_value' if osx_version >= version('10.16') else 'allowed'
+    c.execute("UPDATE access SET %s='1' WHERE client='%s' AND service IS '%s'" % (enable_mode_name, client, service))
     commit_changes()
 
 
@@ -253,7 +258,8 @@ def disable(client):
     # Setting typically appears in System Preferences
     # right away (without closing the window).
     # Set to 0 to disable the client.
-    c.execute("UPDATE access SET allowed='0' WHERE client='%s' AND service IS '%s'" % (client, service))
+    enable_mode_name = 'auth_value' if osx_version >= version('10.16') else 'allowed'
+    c.execute("UPDATE access SET %s='0' WHERE client='%s' AND service IS '%s'" % (enable_mode_name, client, service))
     commit_changes()
 
 
