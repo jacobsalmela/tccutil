@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#****************************************************************************
+# ****************************************************************************
 # tccutil.py, Utility to modify the macOS Accessibility Database (TCC.db)
 #
 # Copyright (C) 2020, @jacobsalmela
@@ -9,7 +9,7 @@
 # terms of the GNU General Public License, either Version 2 or any later
 # version.  This program is distributed in the hope that it will be useful,
 # but WITTHOUT ANY WARRANTY.  See the included LICENSE file for details.
-#*****************************************************************************
+# *****************************************************************************
 
 import argparse
 import sqlite3
@@ -26,7 +26,7 @@ util_name = os.path.basename(sys.argv[0])
 util_version = '1.2.10'
 
 # Current OS X version
-osx_version = version(mac_ver()[0]) # mac_ver() returns 10.16 for Big Sur instead 11.+
+osx_version = version(mac_ver()[0])  # mac_ver() returns 10.16 for Big Sur instead 11.+
 
 # Database Path
 tcc_db = '/Library/Application Support/com.apple.TCC/TCC.db'
@@ -123,18 +123,21 @@ def open_database():
             accessTableDigest = hashlib.sha1(row[0]).hexdigest()[0:10]
             break
         # check if table in DB has expected structure:
-        if not (accessTableDigest == "8e93d38f7c"  # prior to El Capitan
-                or (osx_version >= version('10.11')  # El Capitan , Sierra, High Sierra
-		    and accessTableDigest in ["9b2ea61b30", "1072dc0e4b"])
-                or (osx_version >= version('10.14')  # Mojave and Catalina
-		    and accessTableDigest in ["ecc443615f", "80a4bb6912"])
-                or (osx_version >= version('10.16') # Big Sur and later
-            and accessTableDigest == "3d1c2a0e97")):
+        if not (accessTableDigest == "8e93d38f7c" or  # prior to El Capitan
+                # El Capitan , Sierra, High Sierra
+                (osx_version >= version('10.11') and
+                    accessTableDigest in ["9b2ea61b30", "1072dc0e4b"]) or
+                # Mojave and Catalina
+                (osx_version >= version('10.14') and
+                    accessTableDigest in ["ecc443615f", "80a4bb6912"]) or
+                # Big Sur and later
+                (osx_version >= version('10.16') and
+                    accessTableDigest == "3d1c2a0e97")):
             print("TCC Database structure is unknown.")
             sys.exit(1)
 
         verbose_output("Database opened.\n")
-    except:
+    except TypeError:
         print("Error opening Database.  You probably need to disable SIP for this to work.")
         sys.exit(1)
 
@@ -216,16 +219,20 @@ def insert_client(client):
     # as the default value to enable it is different.
     cli_util_or_bundle_id(client)
     verbose_output("Inserting \"%s\" into Database..." % (client))
-    if osx_version >= version('10.16'): # Big Sur and later
+    # Big Sur and later
+    if osx_version >= version('10.16'):
         c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,0)"
                   % (service, client, client_type))
-    elif osx_version >= version('10.14'):  # Mojave through Big Sur
+    # Mojave through Big Sur
+    elif osx_version >= version('10.14'):
         c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL,NULL,NULL,'UNUSED',NULL,0,0)"
                   % (service, client, client_type))
-    elif osx_version >= version('10.11'):  # El Capitan through Mojave
+    # El Capitan through Mojave
+    elif osx_version >= version('10.11'):
         c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL,NULL)"
                   % (service, client, client_type))
-    else:  # Yosemite or lower.
+    # Yosemite or lower
+    else:
         c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL)"
                   % (service, client, client_type))
     commit_changes()
@@ -281,7 +288,7 @@ def main():
         if args.action == 'reset':
             exit_status = os.system("tccutil \
 {}".format(' '.join(sys.argv[1:])))
-            sys.exit(exit_status/256)
+            sys.exit(exit_status / 256)
         else:
             print("Error\n  Unrecognized command {}".format(args.action))
 
