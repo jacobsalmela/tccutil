@@ -23,7 +23,7 @@ from distutils.version import StrictVersion as version
 util_name = os.path.basename(sys.argv[0])
 
 # Utility Version
-util_version = '1.2.10'
+util_version = '1.2.11'
 
 # Current OS X version
 osx_version = version(mac_ver()[0])  # mac_ver() returns 10.16 for Big Sur instead 11.+
@@ -59,6 +59,10 @@ parser.add_argument(
     help="List all entries in the accessibility database."
 )
 parser.add_argument(
+     '--digest', action='store_true',
+     help="Print the digest hash of the accessibility database."
+ )
+parser.add_argument(
     '--insert', '-i', action='append', default=[],
     help="Adds the given bundle ID or path to the accessibility database.",
 )
@@ -83,7 +87,6 @@ parser.add_argument(
     help="Show the version of this script",
 )
 
-
 def display_version():
     """Print the version of this utility."""
     print("%s %s" % (util_name, util_version))
@@ -98,7 +101,18 @@ def sudo_required():
         display_help(1)
 
 
-def open_database():
+def digest_check(digest_to_check):
+     """Validates that a digest for the table is one that can be used with tccutil."""
+     # Do a sanity check that TCC access table has expected structure
+     accessTableDigest = ""
+     for row in digest_to_check.fetchall():
+        accessTableDigest = hashlib.sha1(row[0]).hexdigest()[0:10]
+        break
+
+     return accessTableDigest
+
+
+def open_database(digest=False):
     """Open the database for editing values."""
     sudo_required()
     global conn
@@ -117,11 +131,12 @@ def open_database():
         c = conn.cursor()
 
         # Do a sanity check that TCC access table has expected structure
-        c.execute("SELECT sql FROM sqlite_master WHERE name='access' and type='table'")
-        accessTableDigest = ""
-        for row in c.fetchall():
-            accessTableDigest = hashlib.sha1(row[0]).hexdigest()[0:10]
-            break
+        accessTableDigest = digest_check(c.execute("SELECT sql FROM sqlite_master WHERE name='access' and type='table'"))
+
+        if digest:
+          print(accessTableDigest)
+          sys.exit(0)
+
         # check if table in DB has expected structure:
         if not (accessTableDigest == "8e93d38f7c" or  # prior to El Capitan
                 # El Capitan , Sierra, High Sierra
@@ -132,8 +147,8 @@ def open_database():
                     accessTableDigest in ["ecc443615f", "80a4bb6912"]) or
                 # Big Sur and later
                 (osx_version >= version('10.16') and
-                    accessTableDigest == "3d1c2a0e97")):
-            print("TCC Database structure is unknown.")
+                   accessTableDigest in ["3d1c2a0e97", "cef70648de"])):
+            print("TCC Database structure is unknown (%s)" % accessTableDigest)
             sys.exit(1)
 
         verbose_output("Database opened.\n")
@@ -299,6 +314,9 @@ def main():
         # If verbose option is set, set verbose to True and remove all verbose arguments.
         global verbose
         verbose = True
+
+    if args.digest:
+         open_database(digest=True)
 
     if args.list:
         list_clients()
