@@ -236,8 +236,11 @@ def insert_client(client):
     verbose_output("Inserting \"%s\" into Database..." % (client))
     # Big Sur and later
     if osx_version >= version('10.16'):
-        c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,0)"
-                  % (service, client, client_type))
+        try:
+          c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,0)"
+                    % (service, client, client_type))
+        except sqlite3.OperationalError:
+          print("Attempting to write a readonly database.  You probably need to disable SIP.")
     # Mojave through Big Sur
     elif osx_version >= version('10.14'):
         c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL,NULL,NULL,'UNUSED',NULL,0,0)"
@@ -257,7 +260,10 @@ def delete_client(client):
     """Remove a client from the database."""
     open_database()
     verbose_output("Removing \"%s\" from Database..." % (client))
-    c.execute("DELETE from access where client IS '%s' AND service IS '%s'" % (client, service))
+    try:
+      c.execute("DELETE from access where client IS '%s' AND service IS '%s'" % (client, service))
+    except sqlite3.OperationalError:
+      print("Attempting to write a readonly database.  You probably need to disable SIP.")
     commit_changes()
 
 
@@ -269,7 +275,10 @@ def enable(client):
     # right away (without closing the window).
     # Set to 1 to enable the client.
     enable_mode_name = 'auth_value' if osx_version >= version('10.16') else 'allowed'
-    c.execute("UPDATE access SET %s='1' WHERE client='%s' AND service IS '%s'" % (enable_mode_name, client, service))
+    try:
+      c.execute("UPDATE access SET %s='1' WHERE client='%s' AND service IS '%s'" % (enable_mode_name, client, service))
+    except sqlite3.OperationalError:
+      print("Attempting to write a readonly database.  You probably need to disable SIP.")
     commit_changes()
 
 
@@ -281,7 +290,10 @@ def disable(client):
     # right away (without closing the window).
     # Set to 0 to disable the client.
     enable_mode_name = 'auth_value' if osx_version >= version('10.16') else 'allowed'
-    c.execute("UPDATE access SET %s='0' WHERE client='%s' AND service IS '%s'" % (enable_mode_name, client, service))
+    try:
+      c.execute("UPDATE access SET %s='0' WHERE client='%s' AND service IS '%s'" % (enable_mode_name, client, service))
+    except sqlite3.OperationalError:
+      print("Attempting to write a readonly database.  You probably need to disable SIP.")
     commit_changes()
 
 
