@@ -106,7 +106,7 @@ def digest_check(digest_to_check):
      # Do a sanity check that TCC access table has expected structure
      accessTableDigest = ""
      for row in digest_to_check.fetchall():
-        accessTableDigest = hashlib.sha1(row[0]).hexdigest()[0:10]
+        accessTableDigest = hashlib.sha1(row[0].encode('utf-8')).hexdigest()[0:10]
         break
 
      return accessTableDigest
