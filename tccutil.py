@@ -17,7 +17,7 @@ import sys
 import os
 import hashlib
 from platform import mac_ver
-from distutils.version import StrictVersion as version
+from packaging.version import Version as version
 
 # Utility Name
 util_name = os.path.basename(sys.argv[0])
