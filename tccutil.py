@@ -4,6 +4,7 @@
 # tccutil.py, Utility to modify the macOS Accessibility Database (TCC.db)
 #
 # Copyright (C) 2020, @jacobsalmela
+# Copyright (C) 2023, @tnarik
 #
 # This is free software; you can redistribute it and/or modify it under the
 # terms of the GNU General Public License, either Version 2 or any later
@@ -147,7 +148,11 @@ def open_database(digest=False):
                     accessTableDigest in ["ecc443615f", "80a4bb6912"]) or
                 # Big Sur and later
                 (osx_version >= version('10.16') and
-                   accessTableDigest in ["3d1c2a0e97", "cef70648de"])):
+                   accessTableDigest in ["3d1c2a0e97", "cef70648de"]) or
+                # Sonoma
+                (osx_version >= version('14.0') and
+                   accessTableDigest in ["34abf99d20"])
+                ):
             print("TCC Database structure is unknown (%s)" % accessTableDigest)
             sys.exit(1)
 
@@ -213,7 +218,6 @@ def list_clients():
 
 def cli_util_or_bundle_id(client):
     """Check if the item is a path or a bundle ID."""
-    global client_type
     # If the app starts with a slash, it is a command line utility.
     # Setting the client_type to 1 will make the item visible in the
     # GUI so you can manually click the checkbox.
@@ -225,6 +229,7 @@ def cli_util_or_bundle_id(client):
     else:
         client_type = 0
         verbose_output("Detected \"%s\" as Bundle ID." % (client))
+    return client_type
 
 
 def insert_client(client):
@@ -232,10 +237,17 @@ def insert_client(client):
     open_database()
     # Check if it is a command line utility or a bundle ID
     # as the default value to enable it is different.
-    cli_util_or_bundle_id(client)
+    client_type = cli_util_or_bundle_id(client)
     verbose_output("Inserting \"%s\" into Database..." % (client))
-    # Big Sur and later
+    # Sonoma
     if osx_version >= version('10.16'):
+        try:
+          c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,2,4,1,NULL,NULL,0,'UNUSED',NULL,0, NULL, NULL, NULL,'UNUSED', NULL)"
+                    % (service, client, client_type))
+        except sqlite3.OperationalError:
+          print("Attempting to write a readonly database.  You probably need to disable SIP.")
+    # Big Sur and later
+    elif osx_version >= version('10.16'):
         try:
           c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,0)"
                     % (service, client, client_type))
