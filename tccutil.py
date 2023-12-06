@@ -24,7 +24,7 @@ from packaging.version import Version as version
 util_name = os.path.basename(sys.argv[0])
 
 # Utility Version
-util_version = '1.2.13'
+util_version = '1.4.0'
 
 # Current OS X version
 osx_version = version(mac_ver()[0])  # mac_ver() returns 10.16 for Big Sur instead 11.+
