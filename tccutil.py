@@ -16,6 +16,7 @@ import argparse
 import sqlite3
 import sys
 import os
+import pwd
 import hashlib
 from platform import mac_ver
 from packaging.version import Version as version
@@ -29,7 +30,7 @@ util_version = '1.4.0'
 # Current OS X version
 osx_version = version(mac_ver()[0])  # mac_ver() returns 10.16 for Big Sur instead 11.+
 
-# Database Path
+# Database Path (System by default)
 tcc_db = '/Library/Application Support/com.apple.TCC/TCC.db'
 
 # Set "sudo" to True if called with Admin-Privileges.
@@ -39,8 +40,7 @@ sudo = True if os.getuid() == 0 else False
 verbose = False
 
 # TCC Service
-service = "kTCCServiceAccessibility"
-
+default_service = "kTCCServiceAccessibility"
 
 parser = argparse.ArgumentParser(description='Modify Accesibility Preferences')
 parser.add_argument(
@@ -48,40 +48,49 @@ parser.add_argument(
     metavar='ACTION',
     type=str,
     nargs='?',
-    help='This option is only used to perform a reset.',
+    help='This option is only used to perform a reset, using "/usr/bin/tccutil".\
+        See `man tccutil` for additional syntax',
 )
 parser.add_argument(
     '--service', '-s',
-    default=service,
+    default=default_service,
     help="Set TCC service"
 )
+
 parser.add_argument(
     '--list', '-l', action='store_true',
-    help="List all entries in the accessibility database."
+    help="List all entries in the accessibility database"
 )
 parser.add_argument(
      '--digest', action='store_true',
-     help="Print the digest hash of the accessibility database."
+     help="Print the digest hash of the accessibility database"
  )
 parser.add_argument(
     '--insert', '-i', action='append', default=[],
-    help="Adds the given bundle ID or path to the accessibility database.",
+    help="Adds the given bundle ID or path to the accessibility database",
 )
 parser.add_argument(
     "-v", "--verbose", action='store_true',
-    help="Outputs additional info for some commands.",
+    help="Outputs additional info for some commands",
 )
 parser.add_argument(
     "-r", "--remove", action='append', default=[],
-    help="Removes a given Bundle ID or Path from the Accessibility Database.",
+    help="Removes a given Bundle ID or Path from the Accessibility Database",
 )
 parser.add_argument(
     "-e", "--enable", action='append', default=[],
-    help="Enables Accessibility Access for the given Bundle ID or Path.",
+    help="Enables Accessibility Access for the given Bundle ID or Path",
 )
 parser.add_argument(
     "-d", "--disable", action='append', default=[],
-    help="Disables Accessibility Access for the given Bundle ID or Path."
+    help="Disables Accessibility Access for the given Bundle ID or Path"
+)
+parser.add_argument(
+    '--user', '-u',
+    nargs="?",
+    const='',
+    default=None,
+    help="Modify accessibility database for a given user (defaults to current, if no additional parameter is provided)",
 )
 parser.add_argument(
     '--version', action='store_true',
@@ -90,15 +99,15 @@ parser.add_argument(
 
 def display_version():
     """Print the version of this utility."""
-    print("%s %s" % (util_name, util_version))
+    print(f"{util_name} {util_version}")
     sys.exit(0)
 
 
 def sudo_required():
     """Check if user has root priveleges to access the database."""
     if not sudo:
-        print("Error:")
-        print("  When accessing the Accessibility Database, %s needs to be run with admin-privileges.\n" % (util_name))
+        print("Error:", file=sys.stderr)
+        print(f"  When accessing the Accessibility Database, {util_name} needs to be run with admin-privileges.\n", file=sys.stderr)
         display_help(1)
 
 
@@ -153,12 +162,12 @@ def open_database(digest=False):
                 (osx_version >= version('14.0') and
                    accessTableDigest in ["34abf99d20"])
                 ):
-            print("TCC Database structure is unknown (%s)" % accessTableDigest)
+            print(f"TCC Database structure is unknown ({accessTableDigest})", file=sys.stderr)
             sys.exit(1)
 
         verbose_output("Database opened.\n")
     except TypeError:
-        print("Error opening Database.  You probably need to disable SIP for this to work.")
+        print("Error opening Database.  You probably need to disable SIP for this to work.", file=sys.stderr)
         sys.exit(1)
 
 
@@ -167,7 +176,7 @@ def display_help(error_code=None):
     parser.print_help()
     if error_code is not None:
         sys.exit(error_code)
-    print("%s %s" % (util_name, util_version))
+    print(f"{util_name} {util_version}")
     sys.exit(0)
 
 
@@ -183,7 +192,7 @@ def close_database():
             except:
                 verbose_output("Database closed.")
         except:
-            print("Error closing Database.")
+            print("Error closing Database.", file=sys.stderr)
         sys.exit(1)
     except:
         pass
@@ -208,7 +217,7 @@ def verbose_output(*args):
 def list_clients():
     """List items in the database."""
     open_database()
-    c.execute("SELECT client from access WHERE service is '%s'" % service)
+    c.execute(f"SELECT client from access WHERE service is '{service}'")
     verbose_output("Fetching Entries from Database...\n")
     for row in c.fetchall():
         # print each entry in the Accessibility pane.
@@ -223,12 +232,12 @@ def cli_util_or_bundle_id(client):
     # GUI so you can manually click the checkbox.
     if client[0] == '/':
         client_type = 1
-        verbose_output("Detected \"%s\" as Command Line Utility." % (client))
+        verbose_output(f'Detected "{client}" as Command Line Utility.')
     # Otherwise, the app will be a bundle ID, which starts
     # with a com., net., or org., etc.
     else:
         client_type = 0
-        verbose_output("Detected \"%s\" as Bundle ID." % (client))
+        verbose_output(f'Detected "{client}" as Bundle ID.')
     return client_type
 
 
@@ -238,74 +247,69 @@ def insert_client(client):
     # Check if it is a command line utility or a bundle ID
     # as the default value to enable it is different.
     client_type = cli_util_or_bundle_id(client)
-    verbose_output("Inserting \"%s\" into Database..." % (client))
+    verbose_output(f'Inserting "{client}" into Database...')
     # Sonoma
     if osx_version >= version('10.16'):
         try:
-          c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,2,4,1,NULL,NULL,0,'UNUSED',NULL,0, NULL, NULL, NULL,'UNUSED', NULL)"
-                    % (service, client, client_type))
+          c.execute(f"INSERT or REPLACE INTO access VALUES('{service}','{client}',{client_type},2,4,1,NULL,NULL,0,'UNUSED',NULL,0, NULL, NULL, NULL,'UNUSED', NULL)")
         except sqlite3.OperationalError:
-          print("Attempting to write a readonly database.  You probably need to disable SIP.")
+          print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
     # Big Sur and later
     elif osx_version >= version('10.16'):
         try:
-          c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,0)"
-                    % (service, client, client_type))
+          c.execute(f"INSERT or REPLACE INTO access VALUES('{service}','{client}',{client_type},2,4,1,NULL,NULL,0,'UNUSED',NULL,0,0)")
         except sqlite3.OperationalError:
-          print("Attempting to write a readonly database.  You probably need to disable SIP.")
+          print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
     # Mojave through Big Sur
     elif osx_version >= version('10.14'):
-        c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL,NULL,NULL,'UNUSED',NULL,0,0)"
-                  % (service, client, client_type))
+        c.execute(f"INSERT or REPLACE INTO access VALUES('{service}','{client}',{client_type},1,1,NULL,NULL,NULL,'UNUSED',NULL,0,0)")
     # El Capitan through Mojave
     elif osx_version >= version('10.11'):
-        c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL,NULL)"
-                  % (service, client, client_type))
+        c.execute(f"INSERT or REPLACE INTO access VALUES('{service}','{client}',{client_type},1,1,NULL,NULL)")
     # Yosemite or lower
     else:
-        c.execute("INSERT or REPLACE INTO access VALUES('%s','%s',%s,1,1,NULL)"
-                  % (service, client, client_type))
+        c.execute(f"INSERT or REPLACE INTO access VALUES('{service}','{client}',{client_type},1,1,NULL)")
     commit_changes()
 
 
 def delete_client(client):
     """Remove a client from the database."""
     open_database()
-    verbose_output("Removing \"%s\" from Database..." % (client))
+    verbose_output(f'Removing "{client}" from Database...')
     try:
-      c.execute("DELETE from access where client IS '%s' AND service IS '%s'" % (client, service))
+      c.execute(f"DELETE from access where client IS '{client}' AND service IS '{service}'")
     except sqlite3.OperationalError:
-      print("Attempting to write a readonly database.  You probably need to disable SIP.")
+      print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
     commit_changes()
 
 
 def enable(client):
     """Add a client from the database."""
     open_database()
-    verbose_output("Enabling %s..." % (client,))
+    verbose_output(f'Enabling {client}...')
     # Setting typically appears in System Preferences
     # right away (without closing the window).
     # Set to 1 to enable the client.
     enable_mode_name = 'auth_value' if osx_version >= version('10.16') else 'allowed'
     try:
-      c.execute("UPDATE access SET %s='1' WHERE client='%s' AND service IS '%s'" % (enable_mode_name, client, service))
+      c.execute(f"UPDATE access SET {enable_mode_name}='1' WHERE client='{client}' AND service IS '{service}'")
     except sqlite3.OperationalError:
-      print("Attempting to write a readonly database.  You probably need to disable SIP.")
+      print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
     commit_changes()
 
 
 def disable(client):
     """Disable a client in the database."""
     open_database()
-    verbose_output("Disabling %s..." % (client,))
+    verbose_output(f"Disabling {client}...")
     # Setting typically appears in System Preferences
     # right away (without closing the window).
     # Set to 0 to disable the client.
     enable_mode_name = 'auth_value' if osx_version >= version('10.16') else 'allowed'
     try:
-      c.execute("UPDATE access SET %s='0' WHERE client='%s' AND service IS '%s'" % (enable_mode_name, client, service))
+      c.execute(f"UPDATE access SET {enable_mode_name}='0' WHERE client='{client}' AND service IS '{service}'")
     except sqlite3.OperationalError:
-      print("Attempting to write a readonly database.  You probably need to disable SIP.")
+      print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
     commit_changes()
 
 
@@ -317,19 +321,27 @@ def main():
         print("  No arguments.\n")
         display_help(2)
 
-    args = parser.parse_args()
+    args, rest = parser.parse_known_args()
 
     if args.version:
         display_version()
         return
 
+    global tcc_db
+    if args.user != None:
+        try:
+            if (len(args.user) > 0): pwd.getpwnam(args.user)
+            tcc_db = os.path.abspath(os.path.expanduser(f'~{args.user}/{tcc_db}'))
+        except KeyError:
+            print(f'User "{args.user}" does not exist. Do you mean to use "{args.user}" as ACTION?', file=sys.stderr)
+            sys.exit(1)
+
     if args.action:
         if args.action == 'reset':
-            exit_status = os.system("tccutil \
-{}".format(' '.join(sys.argv[1:])))
+            exit_status = os.system(f'/usr/bin/tccutil -v {" ".join(rest)}')
             sys.exit(exit_status / 256)
         else:
-            print("Error\n  Unrecognized command {}".format(args.action))
+            print(f'Error\n  Unrecognized command "{args.action}"', file=sys.stderr)
 
     global service
     service = args.service

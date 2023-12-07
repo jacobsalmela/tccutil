@@ -21,6 +21,8 @@ Discussions on this topic can be found here: https://github.com/jacobsalmela/tcc
 
 - `tccutil.py` can be installed without any additional software.
 - it has an easy to use syntax
+- it supports both system wide and user scope TCC manipulation
+- it wraps the native `/usr/bin/tccutil` tool
 - there are other solutions out there, but there were some things I did not like about them:
 
   + [Privacy Manager Services](https://github.com/univ-of-utah-marriott-library-apple/privacy_services_manager) has other dependencies that need to be installed (it has also gone over five years without any updates)
@@ -58,34 +60,36 @@ Clone this repo and manually copy `tccutil.py` to `/usr/local/bin` or run from a
 
 **This utility needs super-user priveleges for most operations.** It is important that you either run this as root or use `sudo`, otherwise it won't work and you will end up with “permission denied” errors.
 
+
 ```
-usage: tccutil.py [-h] [--service SERVICE] [--list] [--insert INSERT] [-v]
-                  [-r REMOVE] [-e ENABLE] [-d DISABLE] [--version]
+usage: tccutil.py [-h] [--service SERVICE] [--list] [--digest] [--insert INSERT] [-v]
+                  [-r REMOVE] [-e ENABLE] [-d DISABLE] [--user [USER]] [--version]
                   [ACTION]
 
 Modify Accesibility Preferences
 
 positional arguments:
-  ACTION                This option is only used to perform a reset.
+  ACTION                This option is only used to perform a reset, using "/usr/bin/tccutil". See
+                        `man tccutil` for additional syntax
 
 optional arguments:
   -h, --help            show this help message and exit
   --service SERVICE, -s SERVICE
                         Set TCC service
-  --list, -l            List all entries in the accessibility database.
+  --list, -l            List all entries in the accessibility database
+  --digest              Print the digest hash of the accessibility database
   --insert INSERT, -i INSERT
-                        Adds the given bundle ID or path to the accessibility
-                        database.
-  -v, --verbose         Outputs additional info for some commands.
+                        Adds the given bundle ID or path to the accessibility database
+  -v, --verbose         Outputs additional info for some commands
   -r REMOVE, --remove REMOVE
-                        Removes a given Bundle ID or Path from the
-                        Accessibility Database.
+                        Removes a given Bundle ID or Path from the Accessibility Database
   -e ENABLE, --enable ENABLE
-                        Enables Accessibility Access for the given Bundle ID
-                        or Path.
+                        Enables Accessibility Access for the given Bundle ID or Path
   -d DISABLE, --disable DISABLE
-                        Disables Accessibility Access for the given Bundle ID
-                        or Path.
+                        Disables Accessibility Access for the given Bundle ID or Path
+  --user [USER], -u [USER]
+                        Modify accessibility database for a given user (defaults to current,
+                        if no additional parameter is provided)
   --version             Show the version of this script
 ```
 
@@ -98,10 +102,22 @@ List existing Entries in the Accessibility Database
 sudo tccutil.py --list
 ```
 
+List existing Entries in the Accessibility Database specific to the current user
+
+```bash
+sudo tccutil.py --list -u
+```
+
 Add `/usr/bin/osascript` to the Accessibility Database (using UNIX-Style Option)
 
 ```bash
 sudo tccutil.py -i /usr/bin/osascript
+````
+
+Add `/usr/bin/osascript` to the Accessibility Database specific to user 'myuser' (using UNIX-Style Option)
+
+```bash
+sudo tccutil.py -i /usr/bin/osascript -u myuser
 ````
 
 Add *Script Editor* to the Accessibility Database (using Long Option)
@@ -126,6 +142,12 @@ Disable `/usr/bin/osascript` (must already exist in the Database)
 
 ```bash
 sudo tccutil.py -d /usr/bin/osascript
+```
+
+Reset system wide accessibility database
+
+```bash
+sudo tccutil.py reset ALL
 ```
 
 ## Contributing
