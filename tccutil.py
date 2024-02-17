@@ -160,7 +160,7 @@ def open_database(digest=False):
                    accessTableDigest in ["3d1c2a0e97", "cef70648de"]) or
                 # Sonoma
                 (osx_version >= version('14.0') and
-                   accessTableDigest in ["34abf99d20"])
+                   accessTableDigest in ["34abf99d20", "e3a2181c14"])
                 ):
             print(f"TCC Database structure is unknown ({accessTableDigest})", file=sys.stderr)
             sys.exit(1)
