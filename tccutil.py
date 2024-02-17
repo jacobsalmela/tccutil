@@ -249,7 +249,7 @@ def insert_client(client):
     client_type = cli_util_or_bundle_id(client)
     verbose_output(f'Inserting "{client}" into Database...')
     # Sonoma
-    if osx_version >= version('10.16'):
+    if osx_version >= version('14.0'):
         try:
           c.execute(f"INSERT or REPLACE INTO access VALUES('{service}','{client}',{client_type},2,4,1,NULL,NULL,0,'UNUSED',NULL,0, NULL, NULL, NULL,'UNUSED', NULL)")
         except sqlite3.OperationalError:
