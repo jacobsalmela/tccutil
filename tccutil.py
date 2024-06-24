@@ -230,7 +230,7 @@ def cli_util_or_bundle_id(client):
     # If the app starts with a slash, it is a command line utility.
     # Setting the client_type to 1 will make the item visible in the
     # GUI so you can manually click the checkbox.
-    if client[0] == '/':
+    if client.startswith('/'):
         client_type = 1
         verbose_output(f'Detected "{client}" as Command Line Utility.')
     # Otherwise, the app will be a bundle ID, which starts
@@ -272,14 +272,18 @@ def insert_client(client):
     commit_changes()
 
 
-def delete_client(client):
+def delete_client(client, service):
     """Remove a client from the database."""
     open_database()
     verbose_output(f'Removing "{client}" from Database...')
     try:
-      c.execute(f"DELETE from access where client IS '{client}' AND service IS '{service}'")
+        client_type = cli_util_or_bundle_id(client)
+        if client_type == 1:
+            c.execute(f"DELETE from access where client='{client}' AND service='{service}'")
+        else:
+            c.execute(f"DELETE from access where client LIKE '%{client}%' AND service='{service}'")
     except sqlite3.OperationalError:
-      print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
+        print("Attempting to write a readonly database. You probably need to disable SIP.", file=sys.stderr)
     commit_changes()
 
 
