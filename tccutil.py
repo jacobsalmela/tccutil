@@ -364,7 +364,7 @@ def main():
         return
 
     for item_to_remove in args.remove:
-        delete_client(item_to_remove)
+        delete_client(item_to_remove, service)
 
     for item in args.insert:
         insert_client(item)
