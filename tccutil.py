@@ -36,6 +36,9 @@ tcc_db = '/Library/Application Support/com.apple.TCC/TCC.db'
 # Set "sudo" to True if called with Admin-Privileges.
 sudo = True if os.getuid() == 0 else False
 
+# Track if we're using local (user-specific) database
+using_local_db = False
+
 # Default Verbosity
 verbose = False
 
@@ -105,9 +108,14 @@ def display_version():
 
 def sudo_required():
     """Check if user has root priveleges to access the database."""
+    # Local user database doesn't require sudo
+    if using_local_db:
+        return
+    
     if not sudo:
         print("Error:", file=sys.stderr)
-        print(f"  When accessing the Accessibility Database, {util_name} needs to be run with admin-privileges.\n", file=sys.stderr)
+        print(f"  When accessing the global TCC Database, {util_name} needs to be run with admin-privileges.", file=sys.stderr)
+        print(f"  To modify the local user database without sudo, use the --user flag.\n", file=sys.stderr)
         display_help(1)
 
 
@@ -333,10 +341,12 @@ def main():
         return
 
     global tcc_db
+    global using_local_db
     if args.user != None:
         try:
             if (len(args.user) > 0): pwd.getpwnam(args.user)
-            tcc_db = os.path.abspath(os.path.expanduser(f'~{args.user}/{tcc_db}'))
+            tcc_db = os.path.abspath(os.path.expanduser(f'~{args.user}/Library/Application Support/com.apple.TCC/TCC.db'))
+            using_local_db = True
         except KeyError:
             print(f'User "{args.user}" does not exist. Do you mean to use "{args.user}" as ACTION?', file=sys.stderr)
             sys.exit(1)
