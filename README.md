@@ -11,6 +11,20 @@
 
 Apple has a utility in `/usr/bin` named `tccutil`, but it only supports one command, which is to `reset` the entire database.  It has been like this for many versions of macOS.   I wanted a command-line utility that would be able to add, remove, list, and take other actions.
 
+## Understanding Global vs Local TCC Databases
+
+macOS maintains two separate TCC databases:
+
+1. **Global TCC Database** (`/Library/Application Support/com.apple.TCC/TCC.db`)
+   - System-wide permissions that apply to all users
+   - **Requires sudo/admin privileges** to modify
+   - Used by default when running `tccutil.py` without the `--user` flag
+
+2. **Local User TCC Database** (`~/Library/Application Support/com.apple.TCC/TCC.db`)
+   - User-specific permissions
+   - **Does NOT require sudo** - users can modify their own database
+   - Accessed by using the `--user` flag (e.g., `tccutil.py --list -u`)
+
 ## SIP Notice
 
 This tool needs SIP disabled in order to function.  The risk of doing so is up to you.
@@ -58,7 +72,10 @@ Clone this repo and manually copy `tccutil.py` to `/usr/local/bin` or run from a
 
 ## Usage
 
-**This utility needs super-user priveleges for most operations.** It is important that you either run this as root or use `sudo`, otherwise it won't work and you will end up with “permission denied” errors.
+**Important:** The privileges required depend on which database you're modifying:
+
+- **Global TCC Database** (default): Requires super-user privileges. Run with `sudo`.
+- **Local User TCC Database** (with `--user` flag): Does NOT require `sudo`. Can be run as a regular user.
 
 
 ```
@@ -96,28 +113,18 @@ optional arguments:
 
 ### Examples
 
+#### Global TCC Database (System-wide, requires sudo)
+
 List existing Entries in the Accessibility Database
 
 ```bash
 sudo tccutil.py --list
 ```
 
-List existing Entries in the Accessibility Database specific to the current user
-
-```bash
-sudo tccutil.py --list -u
-```
-
 Add `/usr/bin/osascript` to the Accessibility Database (using UNIX-Style Option)
 
 ```bash
 sudo tccutil.py -i /usr/bin/osascript
-````
-
-Add `/usr/bin/osascript` to the Accessibility Database specific to user 'myuser' (using UNIX-Style Option)
-
-```bash
-sudo tccutil.py -i /usr/bin/osascript -u myuser
 ````
 
 Add *Script Editor* to the Accessibility Database (using Long Option)
@@ -148,6 +155,26 @@ Reset system wide accessibility database
 
 ```bash
 sudo tccutil.py reset ALL
+```
+
+#### Local User TCC Database (User-specific, no sudo required)
+
+List existing Entries in the current user's Accessibility Database
+
+```bash
+tccutil.py --list -u
+```
+
+Add `/usr/bin/osascript` to the current user's Accessibility Database
+
+```bash
+tccutil.py -i /usr/bin/osascript -u
+```
+
+Add `/usr/bin/osascript` to a specific user's Accessibility Database
+
+```bash
+tccutil.py -i /usr/bin/osascript -u myuser
 ```
 
 ## Contributing
