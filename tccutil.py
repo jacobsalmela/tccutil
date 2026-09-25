@@ -135,6 +135,7 @@ def open_database(digest=False):
     sudo_required()
     global conn
     global c
+    global accessTableDigest
 
     # Check if Datebase is already open, else open it.
     try:
@@ -168,7 +169,10 @@ def open_database(digest=False):
                    accessTableDigest in ["3d1c2a0e97", "cef70648de"]) or
                 # Sonoma
                 (osx_version >= version('14.0') and
-                   accessTableDigest in ["34abf99d20", "e3a2181c14", "f773496775"])
+                   accessTableDigest in ["34abf99d20", "e3a2181c14", "f773496775"]) or
+                # macOS 27.0 (19 access columns)
+                (osx_version >= version('27.0') and
+                   accessTableDigest == "69a89f352d")
                 ):
             print(f"TCC Database structure is unknown ({accessTableDigest})", file=sys.stderr)
             sys.exit(1)
@@ -256,8 +260,18 @@ def insert_client(client):
     # as the default value to enable it is different.
     client_type = cli_util_or_bundle_id(client)
     verbose_output(f'Inserting "{client}" into Database...')
+    # macOS 27.0
+    if accessTableDigest == "69a89f352d":
+        try:
+          c.execute("""INSERT OR REPLACE INTO access VALUES(
+              ?, ?, ?, 2, 4, 1, NULL, NULL, 0, 'UNUSED', NULL, 0,
+              CAST(strftime('%s','now') AS INTEGER), NULL, NULL, 'UNUSED',
+              CAST(strftime('%s','now') AS INTEGER), NULL, 0)""",
+              (service, client, client_type))
+        except sqlite3.OperationalError:
+          print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
     # Sonoma
-    if osx_version >= version('14.0'):
+    elif osx_version >= version('14.0'):
         try:
           c.execute(f"INSERT or REPLACE INTO access VALUES('{service}','{client}',{client_type},2,4,1,NULL,NULL,0,'UNUSED',NULL,0, NULL, NULL, NULL,'UNUSED', NULL)")
         except sqlite3.OperationalError:
