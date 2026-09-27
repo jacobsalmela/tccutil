@@ -25,7 +25,7 @@ from packaging.version import Version as version
 util_name = os.path.basename(sys.argv[0])
 
 # Utility Version
-util_version = '1.5.3'
+util_version = '1.5.4'
 
 # Current OS X version
 osx_version = version(mac_ver()[0])  # mac_ver() returns 10.16 for Big Sur instead 11.+
@@ -216,6 +216,15 @@ def commit_changes():
     conn.commit()
 
 
+def write_failed(error):
+    """Report a failed write to the database and exit with an error."""
+    if 'readonly' in str(error):
+        print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
+    else:
+        print(f"Error writing to the TCC Database: {error}", file=sys.stderr)
+    sys.exit(1)
+
+
 def verbose_output(*args):
     """Show verbose output."""
     if verbose:
@@ -268,20 +277,20 @@ def insert_client(client):
               CAST(strftime('%s','now') AS INTEGER), NULL, NULL, 'UNUSED',
               CAST(strftime('%s','now') AS INTEGER), NULL, 0)""",
               (service, client, client_type))
-        except sqlite3.OperationalError:
-          print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
+        except sqlite3.Error as e:
+          write_failed(e)
     # Sonoma
     elif osx_version >= version('14.0'):
         try:
           c.execute(f"INSERT or REPLACE INTO access VALUES('{service}','{client}',{client_type},2,4,1,NULL,NULL,0,'UNUSED',NULL,0, NULL, NULL, NULL,'UNUSED', NULL)")
-        except sqlite3.OperationalError:
-          print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
+        except sqlite3.Error as e:
+          write_failed(e)
     # Big Sur and later
     elif osx_version >= version('10.16'):
         try:
           c.execute(f"INSERT or REPLACE INTO access VALUES('{service}','{client}',{client_type},2,4,1,NULL,NULL,0,'UNUSED',NULL,0,0)")
-        except sqlite3.OperationalError:
-          print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
+        except sqlite3.Error as e:
+          write_failed(e)
     # Mojave through Big Sur
     elif osx_version >= version('10.14'):
         c.execute(f"INSERT or REPLACE INTO access VALUES('{service}','{client}',{client_type},1,1,NULL,NULL,NULL,'UNUSED',NULL,0,0)")
@@ -304,8 +313,8 @@ def delete_client(client, service):
             c.execute(f"DELETE from access where client='{client}' AND service='{service}'")
         else:
             c.execute(f"DELETE from access where client LIKE '%{client}%' AND service='{service}'")
-    except sqlite3.OperationalError:
-        print("Attempting to write a readonly database. You probably need to disable SIP.", file=sys.stderr)
+    except sqlite3.Error as e:
+        write_failed(e)
     commit_changes()
 
 
@@ -320,8 +329,8 @@ def enable(client):
     enable_value = '2' if osx_version >= version('12.0') else '1'
     try:
       c.execute(f"UPDATE access SET {enable_mode_name}='{enable_value}' WHERE client='{client}' AND service IS '{service}'")
-    except sqlite3.OperationalError:
-      print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
+    except sqlite3.Error as e:
+      write_failed(e)
     commit_changes()
 
 
@@ -335,8 +344,8 @@ def disable(client):
     enable_mode_name = 'auth_value' if osx_version >= version('10.16') else 'allowed'
     try:
       c.execute(f"UPDATE access SET {enable_mode_name}='0' WHERE client='{client}' AND service IS '{service}'")
-    except sqlite3.OperationalError:
-      print("Attempting to write a readonly database.  You probably need to disable SIP.", file=sys.stderr)
+    except sqlite3.Error as e:
+      write_failed(e)
     commit_changes()
 
 

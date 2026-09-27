@@ -183,6 +183,8 @@ Many people have contributed already, so feel free to make a PR and we'll get it
 
 Every PR into `main` must bump `util_version` in `tccutil.py` (e.g. `'1.5.3'` → `'1.5.4'`). A required check fails until the new version is higher than the one on `main` and not already tagged. If another PR merges first with the same version, update your branch and bump again.
 
+Run the tests with `python3 -m unittest discover -s tests -v`. They run `tccutil.py` against `TCC.db` schemas captured from real Macs (see [tests/fixtures](tests/fixtures/README.md)); if your macOS version reports a digest that has no fixture yet, please add one.
+
 ### Releasing
 
 After merging, tag the merged commit on `main` with the version from `tccutil.py` and push the tag:
