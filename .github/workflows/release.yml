@@ -1,0 +1,132 @@
+# Publishes a GitHub release for each stable semver tag (vX.Y.Z) that points at
+# a commit on the default branch, using only GitHub API calls.
+#
+# - Tag pushed on a commit already on main: released immediately.
+# - Tag pushed before its commit is merged: released when the merge lands on
+#   main (only possible with merge commits; squash/rebase create new commits).
+#
+# The tag must match util_version in tccutil.py at the tagged commit.
+
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v[0-9]+.[0-9]+.[0-9]+' ]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Publish releases for stable tags on main
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        BEFORE: ${{ github.event.before }}
+        AFTER: ${{ github.event.after }}
+      run: |
+        semver='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
+        default_branch="$(gh api "repos/$REPO" --jq .default_branch)"
+
+        # Succeed if version $1 is greater than version $2.
+        version_gt() {
+          local IFS=.
+          local -a a=($1) b=($2)
+          local i
+          for i in 0 1 2; do
+            if (( a[i] > b[i] )); then return 0; fi
+            if (( a[i] < b[i] )); then return 1; fi
+          done
+          return 1
+        }
+
+        candidates=()
+        if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          if [[ ! "$GITHUB_REF_NAME" =~ $semver ]]; then
+            echo "Tag $GITHUB_REF_NAME is not a stable semver tag; skipping"
+            exit 0
+          fi
+          candidates=("$GITHUB_REF_NAME")
+        else
+          # Push to the default branch: find stable tags on any newly added commit.
+          if [[ "$BEFORE" =~ ^0+$ ]]; then
+            pushed="$AFTER"
+          else
+            pushed="$(gh api "repos/$REPO/compare/$BEFORE...$AFTER" --jq '.commits[].sha')"
+          fi
+          while IFS=$'\t' read -r ref type sha; do
+            tag="${ref#refs/tags/}"
+            [[ "$tag" =~ $semver ]] || continue
+            if [ "$type" = "tag" ]; then
+              sha="$(gh api "repos/$REPO/git/tags/$sha" --jq .object.sha)"
+            fi
+            if grep -qxF "$sha" <<<"$pushed"; then
+              candidates+=("$tag")
+            fi
+          done < <(gh api --paginate "repos/$REPO/git/matching-refs/tags/v" \
+                     --jq '.[] | [.ref, .object.type, .object.sha] | @tsv')
+        fi
+
+        if [ ${#candidates[@]} -eq 0 ]; then
+          echo "No stable tags to release"
+          exit 0
+        fi
+
+        failed=0
+        for tag in "${candidates[@]}"; do
+          version="${tag#v}"
+          sha="$(gh api "repos/$REPO/commits/$tag" --jq .sha)"
+          echo "::group::$tag ($sha)"
+
+          status="$(gh api "repos/$REPO/compare/$default_branch...$sha" --jq .status)"
+          if [ "$status" != "identical" ] && [ "$status" != "behind" ]; then
+            echo "::notice::$tag is not on $default_branch yet; it will be released when it is merged"
+            echo "::endgroup::"
+            continue
+          fi
+
+          file_version="$(gh api -H 'Accept: application/vnd.github.raw' "repos/$REPO/contents/tccutil.py?ref=$sha" \
+                          | sed -nE "s/^util_version = '([^']*)'\$/\1/p")"
+          if [ "$file_version" != "$version" ]; then
+            echo "::error::$tag does not match util_version in tccutil.py at $sha ('$file_version')"
+            failed=1
+            echo "::endgroup::"
+            continue
+          fi
+
+          if gh api "repos/$REPO/releases/tags/$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists"
+            echo "::endgroup::"
+            continue
+          fi
+
+          make_latest=true
+          if latest="$(gh api "repos/$REPO/releases/latest" --jq .tag_name 2>/dev/null)" \
+             && [[ "$latest" =~ $semver ]] \
+             && ! version_gt "$version" "${latest#v}"; then
+            make_latest=false
+          fi
+
+          url="$(gh api -X POST "repos/$REPO/releases" \
+                   -f tag_name="$tag" \
+                   -f name="$tag" \
+                   -F generate_release_notes=true \
+                   -f make_latest="$make_latest" \
+                   --jq .html_url)"
+          echo "::notice::Published $url"
+          echo "::endgroup::"
+        done
+
+        exit "$failed"

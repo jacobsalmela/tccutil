@@ -180,3 +180,15 @@ tccutil.py -i /usr/bin/osascript -u myuser
 ## Contributing
 
 Many people have contributed already, so feel free to make a PR and we'll get it merged in.
+
+Every PR into `main` must bump `util_version` in `tccutil.py` (e.g. `'1.5.3'` → `'1.5.4'`). A required check fails until the new version is higher than the one on `main` and not already tagged. If another PR merges first with the same version, update your branch and bump again.
+
+### Releasing
+
+After merging, tag the merged commit on `main` with the version from `tccutil.py` and push the tag:
+
+```bash
+git tag v1.5.4 && git push origin v1.5.4
+```
+
+The Release workflow publishes a GitHub release for any `vX.Y.Z` tag on `main` whose version matches `tccutil.py`.
