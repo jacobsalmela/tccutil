@@ -1,0 +1,88 @@
+# Requires every pull request into main to bump util_version in tccutil.py.
+# Pushes to other branches, and PRs between other branches, are not checked.
+#
+# The PR's version must be a stable semver (X.Y.Z), strictly greater than the
+# version currently on main, and must not already be tagged (unless the tag is
+# on the PR itself). The `version-bump` job is a required status check
+# on main, with "require branches to be up to date" enabled so that two PRs
+# cannot both merge with the same bump.
+
+name: Version check
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, edited ]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Require a version bump in tccutil.py
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: |
+        # Set $version to the X.Y.Z version from tccutil.py at a ref, or fail with an annotation.
+        read_version() {
+          local content count re
+          content="$(gh api -H 'Accept: application/vnd.github.raw' "repos/$REPO/contents/tccutil.py?ref=$1")"
+          count="$(grep -cE '^util_version *=' <<<"$content" || true)"
+          if [ "$count" -ne 1 ]; then
+            echo "::error file=tccutil.py::Expected exactly one util_version line at $1, found $count"
+            exit 1
+          fi
+          re="^util_version = '((0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))'\$"
+          if [[ ! "$(grep -E '^util_version *=' <<<"$content")" =~ $re ]]; then
+            echo "::error file=tccutil.py::util_version at $1 must look like util_version = 'X.Y.Z' (stable semver)"
+            exit 1
+          fi
+          version="${BASH_REMATCH[1]}"
+        }
+
+        # Succeed if version $1 is greater than version $2.
+        version_gt() {
+          local IFS=.
+          local -a a=($1) b=($2)
+          local i
+          for i in 0 1 2; do
+            if (( a[i] > b[i] )); then return 0; fi
+            if (( a[i] < b[i] )); then return 1; fi
+          done
+          return 1
+        }
+
+        # Compare against the current tip of main rather than the PR's (possibly stale) base.sha.
+        base_sha="$(gh api "repos/$REPO/commits/$BASE_REF" --jq .sha)"
+
+        read_version "$base_sha"; base_version="$version"
+        read_version "$HEAD_SHA"; head_version="$version"
+        echo "Base ($base_sha): $base_version"
+        echo "Head ($HEAD_SHA): $head_version"
+
+        if ! version_gt "$head_version" "$base_version"; then
+          echo "::error file=tccutil.py::Bump util_version in tccutil.py above $base_version (currently $head_version). Every pull request into $BASE_REF requires a version bump."
+          exit 1
+        fi
+
+        # The new version must not already be released elsewhere. A tag on this
+        # change itself (tagged before merging) is fine.
+        if tag_sha="$(gh api "repos/$REPO/commits/v$head_version" --jq .sha 2>/dev/null)"; then
+          status="$(gh api "repos/$REPO/compare/$tag_sha...$HEAD_SHA" --jq .status)"
+          if [ "$status" != "identical" ] && [ "$status" != "ahead" ]; then
+            echo "::error file=tccutil.py::Tag v$head_version already exists on a different commit; choose a higher version"
+            exit 1
+          fi
+        fi
+
+        echo "Version bumped: $base_version -> $head_version"
