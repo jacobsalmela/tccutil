@@ -172,7 +172,7 @@ def open_database(digest=False):
                    accessTableDigest in ["34abf99d20", "e3a2181c14", "f773496775"]) or
                 # macOS 27.0 (19 access columns)
                 (osx_version >= version('27.0') and
-                   accessTableDigest == "69a89f352d")
+                   accessTableDigest in ["69a89f352d"])
                 ):
             print(f"TCC Database structure is unknown ({accessTableDigest})", file=sys.stderr)
             sys.exit(1)
