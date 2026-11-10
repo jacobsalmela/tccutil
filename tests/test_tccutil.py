@@ -222,6 +222,25 @@ for _fixture in FIXTURE_LIST:
     globals()[_name] = type(_name, (SchemaTests, unittest.TestCase), {'fixture': _fixture})
 
 
+class ResetExitCodeTests(unittest.TestCase):
+    """The `reset` action must propagate /usr/bin/tccutil's exit code as an int."""
+
+    def test_reset_propagates_exit_code(self):
+        for status, expected in [(0, 0), (256, 1), (512, 2)]:
+            with self.subTest(status=status):
+                with mock.patch('os.system', return_value=status) as system, \
+                        mock.patch('platform.mac_ver', return_value=('14.0', ('', '', ''), '')), \
+                        mock.patch.object(sys, 'argv', ['tccutil.py', 'reset']):
+                    sys.modules.pop('tccutil', None)
+                    tccutil = importlib.import_module('tccutil')
+                    tccutil.sudo = True
+                    with self.assertRaises(SystemExit) as ctx:
+                        tccutil.main()
+                system.assert_called_once()
+                self.assertIs(type(ctx.exception.code), int)
+                self.assertEqual(ctx.exception.code, expected)
+
+
 class CoverageTests(unittest.TestCase):
 
     def test_every_supported_digest_has_a_fixture(self):
