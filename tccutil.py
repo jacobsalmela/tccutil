@@ -377,7 +377,7 @@ def main():
     if args.action:
         if args.action == 'reset':
             exit_status = os.system(f'/usr/bin/tccutil -v {" ".join(rest)}')
-            sys.exit(exit_status / 256)
+            sys.exit(os.waitstatus_to_exitcode(exit_status))
         else:
             print(f'Error\n  Unrecognized command "{args.action}"', file=sys.stderr)
 
